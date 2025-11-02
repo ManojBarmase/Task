@@ -7,6 +7,7 @@ const cors = require('cors');
 require('dotenv').config(); 
 const seedDatabase = require('./seedData');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const path = require('path');
 // const bodyParser = require('body-parser');
 
 // import the Authentication Route 
@@ -74,6 +75,11 @@ app.get('/api/status', (req, res) => {
 //     res.json(MOCK_USAGE_DATA); 
 // });
 
+app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '..', 'client', 'dist', 'index.html'));
+});
 
 // Server Start करें
 app.listen(PORT, () => {
