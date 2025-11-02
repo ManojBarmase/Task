@@ -5,7 +5,7 @@ import axios from 'axios';
 import { Plus, Search, Loader2 } from 'lucide-react';
 import AddVendorForm from './AddVendorForm';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const formatCurrency = (amount) => {
     // Convert to K or M for display (like $129.4K)
@@ -86,7 +86,7 @@ const VendorsPage = () => {
     useEffect(() => {
         const fetchVendors = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/vendors`, {
+                const res = await axios.get(`/api/vendors`, {
                     headers: { 'x-auth-token': token }
                 });
                 setVendors(res.data);

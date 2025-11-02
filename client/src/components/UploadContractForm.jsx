@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Loader2, Upload } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const UploadContractForm = ({ onClose, onContractAdded }) => {
     const [formData, setFormData] = useState({
@@ -28,7 +28,7 @@ const UploadContractForm = ({ onClose, onContractAdded }) => {
     useEffect(() => {
         const fetchVendors = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/vendors`, {
+                const res = await axios.get(`/api/vendors`, {
                     headers: { 'x-auth-token': token }
                 });
                 setVendors(res.data);
@@ -83,7 +83,7 @@ const UploadContractForm = ({ onClose, onContractAdded }) => {
                 renewalStatus: formData.renewalStatus, // Default is Pending
             };
 
-            const res = await axios.post(`${API_BASE_URL}/contracts`, payload, {
+            const res = await axios.post(`/api/contracts`, payload, {
                 headers: { 'x-auth-token': token }
             });
 

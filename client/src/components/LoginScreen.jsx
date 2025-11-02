@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Chrome, Check } from 'lucide-react'; // Icons
 
 // Backend API URL (Vite environment variable से)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
@@ -21,7 +21,7 @@ const LoginScreen = () => {
         setMessage('');
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/login`, { 
+            const response = await axios.post(`/api/auth/login`, { 
                 email, 
                 password 
             });

@@ -7,7 +7,7 @@ import RequestForm from './RequestForm';
 import { useNavigate } from 'react-router-dom';
 
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
 // Helper function for formatting currency
@@ -56,13 +56,13 @@ const navLinks = [
         const fetchDashboardData = async () => {
             try {
                 // 1. Fetch Metrics (Cards Data)
-                const metricsRes = await axios.get(`${API_BASE_URL}/dashboard/metrics`, {
+                const metricsRes = await axios.get(`/api/dashboard/metrics`, {
                     headers: { 'x-auth-token': token }
                 });
                 setMetrics(metricsRes.data);
 
                 // 2. Fetch Recent Requests (Table Data)
-                const requestsRes = await axios.get(`${API_BASE_URL}/requests`, {
+                const requestsRes = await axios.get(`/api/requests`, {
                     headers: { 'x-auth-token': token }
                 });
                 // Mock data population (requester name is stored in req.data.requester.name)

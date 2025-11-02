@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, CornerDownLeft, Loader2, Check, LayoutDashboard 
 import { useNavigate } from 'react-router-dom';
 import MainLayout from './MainLayout';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const departments = ['IT', 'HR', 'Finance', 'Marketing', 'Operations', 'R&D'];
 
 // --- Step Components (Placeholders for now) ---
@@ -269,7 +269,7 @@ const RequestForm = ({ onSave }) => {
         };
 
         try {
-            const res = await axios.post(`${API_BASE_URL}/requests`, payload, {
+            const res = await axios.post(`/api/requests`, payload, {
                 headers: { 'x-auth-token': token }
             });
             

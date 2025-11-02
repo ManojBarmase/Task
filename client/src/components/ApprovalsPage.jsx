@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Check, X, Clock, Loader2, Filter, ChevronDown } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -36,7 +36,7 @@ const ApprovalsPage = () => {
         try {
             // Backend must ensure only requests needing this approver's attention are returned,
             // or all requests if user is a Global Approver/Admin.
-            const res = await axios.get(`${API_BASE_URL}/requests`, {
+            const res = await axios.get(`/api/requests`, {
                 headers: { 'x-auth-token': token }
             });
             
@@ -94,7 +94,7 @@ const ApprovalsPage = () => {
         setError(null);
 
         try {
-            const res = await axios.put(`${API_BASE_URL}/requests/${id}/status`, 
+            const res = await axios.put(`/api/requests/${id}/status`, 
                 { status: newStatus },
                 {
                     headers: { 'x-auth-token': token }

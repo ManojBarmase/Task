@@ -5,7 +5,7 @@ import axios from 'axios';
 import { User, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const SignupScreen = () => {
     const [formData, setFormData] = useState({
@@ -35,7 +35,7 @@ const SignupScreen = () => {
 
         try {
             // Call the Backend Register API
-            const res = await axios.post(`${API_BASE_URL}/auth/register`, formData);
+            const res = await axios.post(`api/auth/register`, formData);
             
             // Registration is successful, the API returns a token.
             // We'll store it and redirect to the dashboard.

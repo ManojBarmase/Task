@@ -6,7 +6,7 @@ import { Loader2, Filter, Plus, Clock, Eye, Check, X } from 'lucide-react';
 import RequestForm from './RequestForm'; // RequestForm का उपयोग करें
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -79,7 +79,7 @@ const RequestsPage = () => {
             // NOTE: /requests API is set to return only user-specific requests if role is 'employee'
             // Assuming your backend supports this or you will implement it soon! 
             // For now, this fetches all, but ideally backend filters by req.user.id
-            const res = await axios.get(`${API_BASE_URL}/requests`, {
+            const res = await axios.get(`/api/requests`, {
                 headers: { 'x-auth-token': token }
             });
             

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { X, Loader2 } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AddVendorForm = ({ onClose, onVendorAdded }) => {
     const [formData, setFormData] = useState({
@@ -60,7 +60,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                 notes: formData.notes                  // 👈️ नया फ़ීल्ड
             };
 
-            const res = await axios.post(`${API_BASE_URL}/vendors`, payload, {
+            const res = await axios.post(`/api/vendors`, payload, {
                 headers: { 'x-auth-token': token }
             });
 
