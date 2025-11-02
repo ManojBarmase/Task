@@ -65,9 +65,8 @@ app.get('/api/status', (req, res) => {
 // Render recommends placing the static middleware and catch-all handler AFTER all API routes.
 app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
 
-// FINAL FIX: Using a named wildcard parameter (/:path*) to satisfy the path-to-regexp parser.
-// This is the most reliable way to handle client-side routing in Express.
-app.get('/:path*', (req, res) => { 
+// FIX: Reverting to simple '*' which is stable on Express 4.x
+app.get('*', (req, res) => { 
   res.sendFile(path.resolve(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
