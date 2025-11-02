@@ -9,8 +9,8 @@ const path = require('path');
 const authRoutes = require('./routes/auth'); 
 const dashboardRoutes = require('./routes/dashboard');
 const requestRoutes = require('./routes/request');
-const vendorRoutes = require('./routes/vendor'); // <--- NEW IMPORT
-const contractRoutes = require('./routes/contract'); // <--- NEW IMPORT
+const vendorRoutes = require('./routes/vendor'); 
+const contractRoutes = require('./routes/contract'); 
 const analyticsRoutes = require('./routes/analyticsRoutes');
 // ---------------------------------------
 
@@ -46,8 +46,8 @@ mongoose.connect(MONGO_URI)
 app.use('/api/auth', authRoutes); 
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', requestRoutes);
-app.use('/api/vendors', vendorRoutes); // <--- Updated to use imported variable
-app.use('/api/contracts', contractRoutes); // <--- Updated to use imported variable
+app.use('/api/vendors', vendorRoutes); 
+app.use('/api/contracts', contractRoutes); 
 app.use('/api/analytics', analyticsRoutes);
 
 app.get('/', (req, res) => {
@@ -65,7 +65,9 @@ app.get('/api/status', (req, res) => {
 // Render recommends placing the static middleware and catch-all handler AFTER all API routes.
 app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
 
-app.get('/*', (req, res) => {
+// FINAL FIX: Using a named wildcard parameter (/:path*) to satisfy the path-to-regexp parser.
+// This is the most reliable way to handle client-side routing in Express.
+app.get('/:path*', (req, res) => { 
   res.sendFile(path.resolve(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
