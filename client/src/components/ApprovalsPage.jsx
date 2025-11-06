@@ -133,7 +133,7 @@ const ApprovalsPage = () => {
                 
                 {/* Top Header */}
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-xl font-semibold text-gray-700">Approvals</h1>
+                    <h1 className="text-2xl font-semibold text-gray-800">Approvals</h1>
                     <button
                       onClick={() => setShowFilters(!showFilters)}
                       className="flex items-center px-2 py-1 text-sm bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors">

@@ -176,7 +176,7 @@ const RequestsPage = () => {
             
             {/* Header and Filter Button */}
             <div className="flex justify-between items-center">
-                <h1 className="text-xl font-semibold text-gray-700">Requests</h1>
+                <h1 className="text-2xl font-semibold text-gray-800">Requests</h1>
                 <div className="flex space-x-3">
 
                     <button 
@@ -294,7 +294,7 @@ const RequestsPage = () => {
                         <button 
                             key={tab}
                             onClick={() => setActiveTab(tab)} 
-                            className={`py-2 px-3 text-sm  font-medium transition-colors ${activeTab === tab ? ' py-0 bg-white rounded-full  font-semibold' : 'text-gray-800 hover:text-gray-700'}`}
+                            className={`py-2 px-3 text-sm  font-medium transition-colors ${activeTab === tab ? ' py-0 bg-white rounded-full  font-semibold ' : 'text-gray-800 hover:text-gray-700'}`}
                         >
                             {tab} 
                             {/* ({allRequests.filter(req => tab === 'All' ? true : req.status === tab).length}) */}

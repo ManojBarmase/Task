@@ -141,7 +141,7 @@ const VendorsPage = () => {
             
             {/* Header and Add Vendor Button */}
             <div className="flex justify-between items-center">
-                <h1 className="text-xl font-semibold text-gray-700">Vendors</h1>
+                <h1 className="text-2xl font-semibold text-gray-800">Vendors</h1>
                 <button 
                      onClick={() => setShowAddVendorForm(true)}
                     className="flex items-center px-2 py-1 text-sm bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-500 transition-colors"

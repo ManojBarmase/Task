@@ -163,7 +163,7 @@ const ContractsPage = () => {
                 
                 {/* Header and Buttons */}
                 <div className="flex justify-between items-center">
-                    <h1 className="text-xl font-semibold text-gray-700">Contracts & Renewals</h1>
+                    <h1 className="text-2xl font-semibold text-gray-800">Contracts & Renewals</h1>
                     <div className="flex space-x-3">
                          <button
                             onClick={() => setShowRenewForm(true)}
@@ -184,25 +184,25 @@ const ContractsPage = () => {
                 <div className="grid grid-cols-4 gap-6 mb-6">
                     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-2">
                         <p className="text-sm font-normal text-gray-500">Active Contracts</p>
-                        <div className="text-3xl font-semibold text-gray-900">{activeContracts}</div>
+                        <div className="text-3xl font-normal text-gray-900">{activeContracts}</div>
                         <p className="text-xs text-gray-500">{activeContracts} total contracts</p>
                     </div>
                     
                     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-2">
                         <p className="text-sm font-normal text-gray-500">Total Value</p>
-                        <div className="text-3xl font-semibold text-gray-900 ">{formatCurrency(totalContractValue)}</div>
+                        <div className="text-3xl font-normal text-gray-900 ">{formatCurrency(totalContractValue)}</div>
                         <p className="text-xs text-gray-500">Annual contract value</p>
                     </div>
                     
                     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-2">
                         <p className="text-sm font-normal text-gray-500">Expiring Soon</p>
-                        <div className="text-3xl font-semibold text-gray-900">{expiringSoon}</div>
+                        <div className="text-3xl font-normal text-gray-900">{expiringSoon}</div>
                         <p className="text-xs text-gray-500">Within 90 days</p>
                     </div>
 
                     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-2">
                         <p className="text-sm font-normal text-gray-500">Auto-Renew</p>
-                        <div className="text-3xl font-semibold text-gray-900">{autoRenewCount}</div>
+                        <div className="text-3xl font-normal text-gray-900">{autoRenewCount}</div>
                         <p className="text-xs text-gray-500">Set for auto-renew</p>
                     </div>
                 </div>

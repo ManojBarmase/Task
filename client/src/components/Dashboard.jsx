@@ -126,7 +126,7 @@ const handleNewRequestSave = (newRequest) => {
            
      <div className="p-8 pb-52 bg-gray-50 space-y-6">
                      <div className="flex justify-between items-center">
-                       <h1 className="text-xl font-semibold text-gray-700">Dashboard</h1>
+                       <h1 className="text-2xl font-semibold text-gray-800">Dashboard</h1>
                        
                         {/* 👇️ UPDATED: Conditional Rendering based on isEmployee */}
                         {isEmployee && (

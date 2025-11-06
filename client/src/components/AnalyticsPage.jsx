@@ -15,7 +15,7 @@ const MetricCard = ({ title, value, unit, subtext, icon, color }) => (
     <div className="bg-white p-6 rounded-xl shadow-md " style={{ borderColor: color }}>
         <p className="text-sm font-normal text-gray-500">{title}</p>
         <div className="flex items-end justify-between mt-2">
-           <h3 className="text-3xl font-semibold text-gray-900">
+           <h3 className="text-3xl font-normal text-gray-900">
                 {value !== undefined ? value.toLocaleString() : 'N/A'}
                 <span className="text-base font-bold ml-1" style={{ color: color }}>{unit}</span>
             </h3>
@@ -334,7 +334,7 @@ const categoryOptions = useMemo(() => {
             
             {/* Header and Export Button */}
             <div className="flex justify-between items-center border-b pb-4">
-                <h1 className="text-2xl font-semibold text-gray-900">User Engagement Analytics</h1>
+                <h1 className="text-2xl font-semibold text-gray-800">User Engagement Analytics</h1>
                 <button className="flex items-center font-semibold text-base px-2 py-1 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors">
                     <Download className="w-4 h-4 mr-2" />
                      Export Report
