@@ -62,7 +62,7 @@ const RequestsPage = () => {
     // const [costFilter, setCostFilter] = useState(50000); 
     const navigate = useNavigate();
     const location = useLocation();
-    const [costFilter, setCostFilter] = useState(10000000); // 10 Million
+    const [costFilter, setCostFilter] = useState(100000000000); // 10 Million
     const token = localStorage.getItem('token');
 
     // 👇️ ADDED: Get user role from local storage
