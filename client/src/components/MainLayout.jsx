@@ -8,6 +8,14 @@ const MainLayout = () => {
     const navigate = useNavigate();
     // const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Small screen toggle (Optional)
 
+    // 👈️ नया स्टेट: प्रोफाइल मॉडल की स्थिति ट्रैक करने के लिए
+    const [isProfileOpen, setIsProfileOpen] = useState(false); 
+    
+    // 👈️ नया हैंडलर: क्लिक करने पर स्थिति बदलने के लिए
+    const toggleProfile = () => {
+        setIsProfileOpen(!isProfileOpen);
+    };
+
     const userRole = localStorage.getItem('userRole'); 
     const isApprover = userRole === 'approver' || userRole === 'admin'; 
     const userNameInitial = localStorage.getItem('userNameInitial') || 'JD'; 
@@ -84,8 +92,11 @@ const MainLayout = () => {
                             className="w-full px-4 py-2 text-gray-800 border border-gray-300 bg-sky-50  rounded-lg focus:ring-sky-500 focus:border-sky-500 text-sm font-normal "
                         />
                     </div>
-                    <div className="flex items-center space-x-4">
-                        <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-sky-600 text-white font-bold">
+                   <div className="flex items-center space-x-4 relative"> {/* relative जोड़ा गया ताकि मॉडल को absolute position दी जा सके */}
+                        <span 
+                            className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-sky-600 text-white font-bold cursor-pointer transition-shadow hover:shadow-lg"
+                            onClick={toggleProfile} // 👈️ यहां क्लिक हैंडलर जोड़ा गया
+                        >
                             {userNameInitial}
                         </span>
                     </div>
@@ -97,6 +108,10 @@ const MainLayout = () => {
                     <Outlet />
                 </main>
             </div>
+
+           {/* 👈️ Conditional Rendering: मॉडल को यहां रेंडर करें */}
+            {isProfileOpen && <UserProfileModal onClose={toggleProfile} />}
+
         </div>
     );
 };
