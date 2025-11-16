@@ -107,15 +107,17 @@ const AnalyticsPage = () => {
 useEffect(() => {
     // API_BASE_URL ko yahan define kar dein ya ensure karein ki woh component ke scope mein ho.
     // const API_BASE_URL = 'http://localhost:5000/api/analytics'; 
+    const API_BASE_URL = import.meta.env.VITE_API_URL;
+    
 
     const fetchAnalyticsData = async () => {
         try {
             // Fetch Metrics
-            const metricsRes = await axios.get(`/api/analytics/metrics`);
+            const metricsRes = await axios.get(`${API_BASE_URL}/api/analytics/metrics`);
             setMetrics(metricsRes.data);
 
             // Fetch Usage Data
-            const usageRes = await axios.get(`/api/analytics/usage`);
+            const usageRes = await axios.get(`${API_BASE_URL}/api/analytics/usage`);
             
             // --- 🎯 NEW: Console Log Added ---
             console.log("Fetched Usage Data (Raw):", usageRes.data);
@@ -130,10 +132,10 @@ useEffect(() => {
             setUsageData(usageArray);
 
             // Fetch Recommendations
-            const recsRes = await axios.get(`/api/analytics/recommendations`);
+            const recsRes = await axios.get(`${API_BASE_URL}/api/analytics/recommendations`);
 
             // 👇️ START: Shadow IT Fetching Logic
-             const shadowITRes = await axios.get(`/api/analytics/shadow-it`);
+             const shadowITRes = await axios.get(`${API_BASE_URL}/api/analytics/shadow-it`);
              let shadowITArray = Array.isArray(shadowITRes.data) 
               ? shadowITRes.data 
               : (shadowITRes.data && shadowITRes.data.data && Array.isArray(shadowITRes.data.data) ? shadowITRes.data.data : []);

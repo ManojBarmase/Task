@@ -40,6 +40,7 @@ const SignupScreen = () => {
             // Registration is successful, the API returns a token.
             // We'll store it and redirect to the dashboard.
             localStorage.setItem('token', res.data.token); 
+            localStorage.setItem('userRole', res.data.role); // 👈️ यह लाइन जोड़ें
             // NOTE: Register API does not return role by default, 
             // but we can assume 'employee' or fetch later. For now, we only store token.
 
@@ -48,7 +49,7 @@ const SignupScreen = () => {
 
             // Redirect to dashboard after a short delay
             setTimeout(() => {
-                navigate('/dashboard'); 
+                navigate('/requests'); 
             }, 1000);
 
         } catch (err) {

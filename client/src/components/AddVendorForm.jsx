@@ -2,9 +2,22 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2 , Upload} from 'lucide-react';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+const countryList = [
+    'United States', 
+    'Canada', 
+    'India', 
+    'United Kingdom',
+    'Germany',
+    'Australia',
+    'Brazil',
+    'Japan',
+    'Other'
+];
 
 const AddVendorForm = ({ onClose, onVendorAdded }) => {
     const [formData, setFormData] = useState({
@@ -17,7 +30,20 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
         initialSpend: 0,   // Maps to annualSpend
         website: '',       // Not in model yet, but in UI, will ignore for backend
         notes: ''          // Not in model yet, but in UI, will ignore for backend
+        ,
+        // 👇️ NEW FIELDS ADDED HERE
+        registeredId: '', // Company Registered ID
+        billingCountry: 'India',
+        billingAddress: '',
+        billingCity: '',
+        billingZip: '',
+        companyCountry: 'India',
+        companyAddress: '',
+        companyCity: '',
+        companyZip: '',
     });
+      // 👇️ NEW STATE for file upload
+    const [uploadedFile, setUploadedFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
@@ -30,6 +56,12 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+     // 👇️ FILE CHANGE HANDLER
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        setUploadedFile(file);
     };
 
     const handleSubmit = async (e) => {
@@ -48,19 +80,44 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
         try {
             // Backend Model fields: vendorName, productTool, category, contactEmail, annualSpend, addedBy
             // We will only send these fields to backend, others are UI-only for now.
-            const payload = {
-                vendorName: formData.vendorName,
-                productTool: formData.productTool,
-                category: formData.category,
-                contactPerson: formData.contactPerson, // 👈️ नया फ़ील्ड
-                contactEmail: formData.contactEmail,
-                phoneNumber: formData.phoneNumber,     // 👈️ नया फ़ील्ड
-                annualSpend: parseFloat(formData.initialSpend) || 0, // renamed initialSpend to annualSpend
-                website: formData.website,             // 👈️ नया फ़ील्ड
-                notes: formData.notes                  // 👈️ नया फ़ීल्ड
-            };
+            // const payload = {
+            //     vendorName: formData.vendorName,
+            //     productTool: formData.productTool,
+            //     category: formData.category,
+            //     contactPerson: formData.contactPerson, // 👈️ नया फ़ील्ड
+            //     contactEmail: formData.contactEmail,
+            //     phoneNumber: formData.phoneNumber,     // 👈️ नया फ़ील्ड
+            //     annualSpend: parseFloat(formData.initialSpend) || 0, // renamed initialSpend to annualSpend
+            //     registeredId: formData.registeredId, 
+            //     billingCountry: formData.billingCountry,
+            //     billingAddress: formData.billingAddress,
+            //     billingCity: formData.billingCity,
+            //     billingZip: formData.billingZip,
+            //     companyCountry: formData.companyCountry,
+            //     companyAddress: formData.companyAddress,
+            //     companyCity: formData.companyCity,
+            //     companyZip: formData.companyZip,  website: formData.website,             // 👈️ नया फ़ील्ड
+            //     notes: formData.notes                  // 👈️ नया फ़ීल्ड
+            // };
 
-            const res = await axios.post(`/api/vendors`, payload, {
+             const data = new FormData();
+            
+            // 1. Append Text Data
+            for (const key in formData) {
+                // Ensure number values (like initialSpend) are converted correctly
+                if (key === 'initialSpend') {
+                    data.append('annualSpend', parseFloat(formData.initialSpend) || 0);
+                } else {
+                    data.append(key, formData[key]);
+                }
+            }
+            
+            // 2. Append File Data (backend-এ এটি 'document' হিসাবে পরিচিত হবে)
+            if (uploadedFile) {
+                data.append('document', uploadedFile);
+            }
+
+            const res = await axios.post(`${API_BASE_URL}/api/vendors`, data, {
                 headers: { 'x-auth-token': token }
             });
 
@@ -68,8 +125,12 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
             setFormData({ // Clear form fields
                 vendorName: '', productTool: '', category: 'Other', 
                 contactPerson: '', contactEmail: '', phoneNumber: '', 
-                initialSpend: 0, website: '', notes: ''
+                initialSpend: 0, website: '', notes: '',
+                 registeredId: '', billingCountry: '', billingAddress: '', 
+                billingCity: '', billingZip: '', companyCountry: '', 
+                companyAddress: '', companyCity: '', companyZip: '',
             });
+             setUploadedFile(null);
             onVendorAdded(res.data); // Notify parent component of new vendor
             // onClose(); // Optionally close form after success
             
@@ -88,7 +149,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                 {/* Modal Header */}
                 <div className="flex justify-between items-center p-5 border-b border-gray-200">
                     <div>
-                        <h3 className="text-xl font-bold text-gray-900">Add New Vendor</h3>
+                        <h3 className="text-xl font-bold text-gray-900">Create New Vendor</h3>
                         <p className="text-sm text-gray-500">Enter the details of the new vendor to add them to your vendor management system.</p>
                     </div>
                     <button 
@@ -118,7 +179,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                         {/* Vendor Name */}
                         <div>
                             <label htmlFor="vendorName" className="block text-sm font-medium text-gray-700 mb-1">
-                                Vendor Name *
+                                Vendor Registered Name *
                             </label>
                             <input
                                 type="text"
@@ -135,7 +196,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                         {/* Product/Tool Name */}
                         <div>
                             <label htmlFor="productTool" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product/Tool Name *
+                                Product/Tool Name 
                             </label>
                             <input
                                 type="text"
@@ -144,7 +205,6 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 value={formData.productTool}
                                 onChange={handleChange}
                                 placeholder="e.g., Google Workspace, Slack"
-                                required
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
                             />
                         </div>
@@ -232,6 +292,192 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
                             />
                         </div>
+
+                        {/* ------------------------------------------------------------- */}
+                        {/* 👇️ NEW: Company Registered ID */}
+                        <div className="col-span-2">
+                            <label htmlFor="registeredId" className="block text-sm font-medium text-gray-700 mb-1">
+                                Company Registered ID
+                            </label>
+                            <input
+                                type="text"
+                                id="registeredId"
+                                name="registeredId"
+                                value={formData.registeredId}
+                                onChange={handleChange}
+                                placeholder="e.g., CIN or Tax ID"
+                                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                            />
+                        </div>
+                        {/* ------------------------------------------------------------- */}
+ 
+                          {/* ------------------------------------------------------------- */}
+                        {/* Upload Document Field (NEW) */}
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Upload Document (Contract, Invoice, etc.)
+                            </label>
+                            <div className="flex items-center space-x-3">
+                                <label className="cursor-pointer bg-white py-2 px-4 border border-sky-600 rounded-lg shadow-sm text-sm font-medium text-sky-600 hover:bg-sky-50 flex items-center transition-colors">
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Choose File
+                                    <input 
+                                        type="file" 
+                                        className="sr-only" 
+                                        onChange={handleFileChange}
+                                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" // Accepted file types
+                                    />
+                                </label>
+                                <span className="text-sm text-gray-500 truncate max-w-xs sm:max-w-md">
+                                    {uploadedFile ? uploadedFile.name : 'No file chosen'}
+                                </span>
+                                {uploadedFile && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setUploadedFile(null)}
+                                        className="text-red-500 hover:text-red-700"
+                                        title="Remove file"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        {/* ------------------------------------------------------------- */}
+
+                        {/* 👇️ NEW SECTION: Billing Address */}
+                        <div className="col-span-2 pt-4 border-t border-gray-200">
+                            <h4 className="text-md font-semibold text-gray-800 mb-3">Billing Address</h4>
+                            <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                                
+                                {/* Billing Country */}
+                               {/* Billing Country (SELECT DROPDOWN) */}
+                                <div>
+                                    <label htmlFor="billingCountry" className="block text-sm font-medium text-gray-700 mb-1">Country (देश)</label>
+                                    <select
+                                        id="billingCountry"
+                                        name="billingCountry"
+                                        value={formData.billingCountry}
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    >
+                                        {countryList.map(country => (
+                                            <option key={country} value={country}>{country}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Billing Address Line */}
+                                <div className="col-span-2">
+                                    <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">Address Line</label>
+                                    <input
+                                        type="text"
+                                        id="billingAddress"
+                                        name="billingAddress"
+                                        value={formData.billingAddress}
+                                        onChange={handleChange}
+                                        placeholder="Street address, P.O. Box, etc."
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    />
+                                </div>
+                                
+                                {/* Billing City */}
+                                <div>
+                                    <label htmlFor="billingCity" className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                    <input
+                                        type="text"
+                                        id="billingCity"
+                                        name="billingCity"
+                                        value={formData.billingCity}
+                                        onChange={handleChange}
+                                        placeholder="e.g., Mumbai"
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    />
+                                </div>
+
+                                {/* Billing Zip/Postal Code */}
+                                <div>
+                                    <label htmlFor="billingZip" className="block text-sm font-medium text-gray-700 mb-1">Zip/Postal Code</label>
+                                    <input
+                                        type="text"
+                                        id="billingZip"
+                                        name="billingZip"
+                                        value={formData.billingZip}
+                                        onChange={handleChange}
+                                        placeholder="e.g., 400001"
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        {/* ------------------------------------------------------------- */}
+
+
+                        {/* 👇️ NEW SECTION: Company Address */}
+                        <div className="col-span-2 pt-4 border-t border-gray-200">
+                            <h4 className="text-md font-semibold text-gray-800 mb-3">Company Address</h4>
+                            <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                                
+                                {/* Company Country */}
+                               <div>
+                                    <label htmlFor="companyCountry" className="block text-sm font-medium text-gray-700 mb-1">Country (देश)</label>
+                                    <select
+                                        id="companyCountry"
+                                        name="companyCountry"
+                                        value={formData.companyCountry}
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    >
+                                        {countryList.map(country => (
+                                            <option key={country} value={country}>{country}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Company Address Line */}
+                                <div className="col-span-2">
+                                    <label htmlFor="companyAddress" className="block text-sm font-medium text-gray-700 mb-1">Address Line</label>
+                                    <input
+                                        type="text"
+                                        id="companyAddress"
+                                        name="companyAddress"
+                                        value={formData.companyAddress}
+                                        onChange={handleChange}
+                                        placeholder="Street address, P.O. Box, etc."
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    />
+                                </div>
+                                
+                                {/* Company City */}
+                                <div>
+                                    <label htmlFor="companyCity" className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                    <input
+                                        type="text"
+                                        id="companyCity"
+                                        name="companyCity"
+                                        value={formData.companyCity}
+                                        onChange={handleChange}
+                                        placeholder="e.g., Mumbai"
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    />
+                                </div>
+
+                                {/* Company Zip/Postal Code */}
+                                <div>
+                                    <label htmlFor="companyZip" className="block text-sm font-medium text-gray-700 mb-1">Zip/Postal Code</label>
+                                    <input
+                                        type="text"
+                                        id="companyZip"
+                                        name="companyZip"
+                                        value={formData.companyZip}
+                                        onChange={handleChange}
+                                        placeholder="e.g., 400001"
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        {/* ------------------------------------------------------------- */}
 
                         {/* Website (UI only for now) */}
                         <div className="col-span-2">

@@ -7,6 +7,7 @@ import UploadContractForm from './UploadContractForm';
 import RenewContractForm from './RenewContractForm';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const formatCurrency = (amount) => {
     // Format to $X,XXX or $X.XK for display
@@ -97,7 +98,7 @@ const ContractsPage = () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await axios.get(`/api/contracts`, {
+            const res = await axios.get(`${API_BASE_URL}/api/contracts`, {
                 headers: { 'x-auth-token': token }
             });
             setContracts(res.data);

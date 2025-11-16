@@ -13,6 +13,7 @@ import VendorsPage from './components/VendorsPage';
 import ContractsPage from './components/ContractsPage';
 import IntegrationsPage from './components/IntegrationsPage';
 import RequestForm from './components/RequestForm';
+import RequestDetailPage from './components/RequestDetailPage';
 
 // Protected Route Component (इसे सरल रखें)
 const ProtectedRoute = ({ element: Element, ...rest }) => {
@@ -27,17 +28,20 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<LoginScreen />} />
                 <Route path="/signup" element={<SignupScreen />} />
-            
+                
+                {/* 👇️ NEW: Edit Route */}
+                <Route path="/requests/edit/:id" element={<RequestForm />} />
                  {/* 👇️ NEW: RequestForm is now a standalone route without MainLayout */}
                 <Route path="/requests/new" element={<RequestForm />} />
 
                 {/* Protected Routes - MainLayout as the Parent */}
                 <Route element={<ProtectedRoute element={MainLayout} />}> {/* 👈️ Parent Route */}
                     {/* Child Routes will render inside MainLayout's <Outlet /> */}
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    {/* <Route path="/dashboard" element={<Dashboard />} /> */}
                     <Route path="/approvals" element={<ApprovalsPage />} />
                     {/* भविष्य में Requests Page, Vendors Page आदि यहाँ जोड़ेंगे */}
                     <Route path="/requests" element={<RequestsPage />} />
+                    <Route path="/requests/:id" element={<RequestDetailPage />} />
                     <Route path="/vendors" element={<VendorsPage />} />
                     <Route path="/contracts" element={<ContractsPage />} />
                     <Route path="/integrations" element={<IntegrationsPage />} />

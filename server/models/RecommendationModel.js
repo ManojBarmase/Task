@@ -1,3 +1,4 @@
+// server/models/RecommendationModel.js
 const mongoose = require('mongoose');
 
 const RecommendationSchema = new mongoose.Schema({

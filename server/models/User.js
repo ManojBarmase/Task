@@ -21,6 +21,27 @@ const UserSchema = new mongoose.Schema({
         default: 'employee',
         enum: ['employee', 'approver', 'admin']
     },
+    // 👈️ प्रोफ़ाइल फ़ील्ड्स: पहली बार खाली रहेंगे
+    companyName: {
+        type: String,
+        default: '', 
+    },
+    companyAddress: {
+        type: String,
+        default: '',
+    },
+    city: { // 👈️ नया 'city' फ़ील्ड जोड़ा गया
+        type: String,
+        default: '',
+    },
+    country: {
+        type: String,
+        default: '',
+    },
+    zipCode: {
+        type: String,
+        default: '',
+    },
     date: {
         type: Date,
         default: Date.now

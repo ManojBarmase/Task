@@ -5,6 +5,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User'); // User Model को import करें
+const auth = require('../middleware/auth'); // 👈️ Auth Middleware import करें
 
 // .env से JWT Secret Key सेट करें (अभी हम इसे server.js में सेट करेंगे)
 // const JWT_SECRET = 'your_strong_jwt_secret'; 
@@ -113,5 +114,114 @@ router.post('/login', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
+// @route   PUT api/auth/profile
+// @desc    Update user profile details (requires token)
+// @access  Private
+router.put('/profile', auth, async (req, res) => {
+    // केवल उन फ़ील्ड्स को निकालें जिन्हें हम अपडेट करना चाहते हैं
+    const { name, companyName, companyAddress, city,country, zipCode } = req.body;
+    
+    // Email और Role को अपडेट करने की अनुमति न दें!
+    const profileFields = {};
+    if (name) profileFields.name = name;
+    if (companyName) profileFields.companyName = companyName;
+    if (companyAddress) profileFields.companyAddress = companyAddress;
+    if (city) profileFields.city = city;
+    if (country) profileFields.country = country;
+    if (zipCode) profileFields.zipCode = zipCode;
+
+    try {
+        let user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        // Mongoose के findByIdAndUpdate का उपयोग करके अपडेट करें
+        user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $set: profileFields },
+            { new: true, runValidators: true } // new: true अपडेटेड डॉक्यूमेंट वापस करेगा
+        ).select('-password');
+        
+        // 💡 यदि आपके User मॉडल में ये फ़ील्ड्स नहीं हैं, तो Mongoose इन्हें अनदेखा कर देगा।
+        // सुनिश्चित करें कि आपका User मॉडल इन सभी फ़ील्ड्स को सपोर्ट करता है।
+
+        // फ्रंटएंड को अपडेटेड डेटा भेजें (profileDetails.jsx के Fetch में उपयोग होगा)
+        const updatedProfileData = {
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            companyName: user.companyName || companyName, // Fallback if DB update is not set up
+            companyAddress: user.companyAddress || companyAddress,
+            city: user.city,
+            country: user.country || country,
+            zipCode: user.zipCode || zipCode,
+        };
+        
+        res.json(updatedProfileData);
+
+    } catch (err) {
+        console.error(err.message);
+        // यदि वैलिडेशन या सर्वर में कोई और समस्या है
+        res.status(500).send('Server error during profile update');
+    }
+});
+
+// @route   GET api/auth/profile
+// @desc    Get user profile details (requires token)
+// @access  Private
+// router.get('/profile', auth, async (req, res) => {
+//     try {
+//         // req.user.id को auth middleware से प्राप्त करें
+//         // select('-password') का उपयोग करके हम password को बाहर रखते हैं
+//         const user = await User.findById(req.user.id).select('-password'); 
+
+//         if (!user) {
+//             return res.status(404).json({ msg: 'User not found' });
+//         }
+        
+//         // 💡 DUMMY DATA जोड़ें: क्योंकि आपका User मॉडल में शायद ये फ़ील्ड नहीं हैं
+//         // असली काम में, ये फ़ील्ड User मॉडल या एक अलग Company/Profile मॉडल में होने चाहिए।
+//         const profileData = {
+//             name: user.name,
+//             email: user.email,
+//             role: user.role,
+//             // 👈️ यहां वास्तविक DB से डेटा आना चाहिए
+//             companyName: user.companyName || 'Procure Solutions Inc.', 
+//             companyAddress: user.companyAddress || '123 Tech Park Rd, Unit 4',
+//             country: user.country || 'India',
+//             zipCode: user.zipCode || '110001',
+//         };
+
+//         res.json(profileData);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server error');
+//     }
+// });
+router.get('/profile', auth, async (req, res) => {
+    try {
+        // डेटाबेस से सभी आवश्यक फ़ील्ड्स को Fetch करें
+        const user = await User.findById(req.user.id)
+            .select('-password -date'); // password और date को बाहर रखें
+
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+        
+        // 👈️ सीधे DB से प्राप्त यूजर ऑब्जेक्ट को भेजें।
+        // चूँकि हमने User स्कीमा में default: '' सेट किया है, यदि यूजर ने इन्हें कभी
+        // नहीं भरा है, तो वे खाली स्ट्रिंग के रूप में रिटर्न होंगे।
+        res.json(user); 
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 
 module.exports = router;

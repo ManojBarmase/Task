@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { LogOut, CheckSquare, Clock, Users, DollarSign, TrendingUp, LayoutDashboard, BarChart3 } from 'lucide-react';
-
+import UserProfileModal from './UserProfileModal'
 const MainLayout = () => {
     const navigate = useNavigate();
     // const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Small screen toggle (Optional)
@@ -18,18 +18,27 @@ const MainLayout = () => {
 
     const userRole = localStorage.getItem('userRole'); 
     const isApprover = userRole === 'approver' || userRole === 'admin'; 
+    const isSuperAdmin = userRole === 'super-admin'; // 👈️ नया 'super-admin' रोल
+
+    // 👈️ नया वेरिएबल: यह तब true होगा जब user न तो approver हो और न ही admin.
+    const isEmployee = userRole === 'requester';
     const userNameInitial = localStorage.getItem('userNameInitial') || 'JD'; 
     // NOTE: सुनिश्चित करें कि आप लॉगिन/रजिस्टर के बाद यह 'userNameInitial' localStorage में सेव कर रहे हैं।
 
-    const navLinks = [
-        { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', current: true, show: true },
-        { name: 'Requests', icon: Clock, href: '/requests', current: false, show: true },
-        { name: 'Approvals', icon: CheckSquare, href: '/approvals', current: false, show: isApprover }, 
-        { name: 'Vendors', icon: Users, href: '/vendors', current: false, show: true },
-        { name: 'Contracts', icon: DollarSign, href: '/contracts', current: false, show: true },
-        { name: 'Integrations', icon: TrendingUp, href: '/integrations', current: false, show: true },
-        { name: 'Analytics', icon: BarChart3, href: '/analytics', current: false, show: true },
-    ];
+   // 👈️ isApprover लॉजिक को अन्य लिंक्स पर लागू करें
+const navLinks = [
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', current: true, show: isSuperAdmin }, // हमेशा दिखाएं
+    { name: 'Requests', icon: Clock, href: '/requests', current: false, show: true },           // हमेशा दिखाएं
+    
+    // Approver/Admin के लिए विशिष्ट लिंक्स:
+    { name: 'Approvals', icon: CheckSquare, href: '/approvals', current: false, show: isApprover }, 
+    
+    // Employee (Requester) को ये लिंक्स नहीं दिखने चाहिए
+    { name: 'Vendors', icon: Users, href: '/vendors', current: false, show: isApprover }, // 👈️ केवल Approver/Admin के लिए
+    { name: 'Contracts', icon: DollarSign, href: '/contracts', current: false, show: isApprover }, // 👈️ केवल Approver/Admin के लिए
+    { name: 'Integrations', icon: TrendingUp, href: '/integrations', current: false, show: isApprover }, // 👈️ केवल Approver/Admin के लिए
+    { name: 'Analytics', icon: BarChart3, href: '/analytics', current: false, show: isApprover }, // 👈️ केवल Approver/Admin के लिए
+];
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -63,7 +72,7 @@ const MainLayout = () => {
                 </nav>
             </div>
 
-            <div className="p-4 border-t border-gray-200">
+            {/* <div className="p-4 border-t border-gray-200">
                 <button 
                     onClick={handleLogout}
                     className="flex items-center w-full px-4 py-2.5 text-white hover:bg-sky-900 hover:text-white rounded-lg transition-colors"
@@ -71,7 +80,7 @@ const MainLayout = () => {
                     <LogOut className="w-5 h-5 mr-3" />
                     Log Out
                 </button>
-            </div>
+            </div> */}
         </div>
     );
     // ----------------------------------------------------
@@ -110,8 +119,12 @@ const MainLayout = () => {
             </div>
 
            {/* 👈️ Conditional Rendering: मॉडल को यहां रेंडर करें */}
-            {isProfileOpen && <UserProfileModal onClose={toggleProfile} />}
-
+            {/* {isProfileOpen && <UserProfileModal onClose={toggleProfile} />} */}
+           {/* 👈️ Profile Modal को अपडेट करें */}
+            {isProfileOpen && <UserProfileModal 
+                onClose={toggleProfile} 
+                onLogout={handleLogout} // 👈️ यहां onLogout प्रॉप पास करें
+            />}
         </div>
     );
 };

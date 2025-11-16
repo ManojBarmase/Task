@@ -5,6 +5,7 @@ import axios from 'axios';
 import { X, Loader2, Upload } from 'lucide-react';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const UploadContractForm = ({ onClose, onContractAdded }) => {
     const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ const UploadContractForm = ({ onClose, onContractAdded }) => {
     useEffect(() => {
         const fetchVendors = async () => {
             try {
-                const res = await axios.get(`/api/vendors`, {
+                const res = await axios.get(`${API_BASE_URL}/api/vendors`, {
                     headers: { 'x-auth-token': token }
                 });
                 setVendors(res.data);
@@ -83,7 +84,7 @@ const UploadContractForm = ({ onClose, onContractAdded }) => {
                 renewalStatus: formData.renewalStatus, // Default is Pending
             };
 
-            const res = await axios.post(`/api/contracts`, payload, {
+            const res = await axios.post(`${API_BASE_URL}/api/contracts`, payload, {
                 headers: { 'x-auth-token': token }
             });
 
@@ -250,10 +251,10 @@ const UploadContractForm = ({ onClose, onContractAdded }) => {
                             />
                         </div>
 
-                        {/* Upload Contract Document */}
+                        {/* Upload  Document */}
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Upload Contract Document
+                                Upload Document
                             </label>
                             <div className="flex items-center space-x-3">
                                 <label className="cursor-pointer bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center">

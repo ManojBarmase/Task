@@ -2,6 +2,14 @@
 
 const mongoose = require('mongoose');
 
+// Address Sub-schema (Billing और Company Address दोनों के लिए इसका उपयोग करेंगे)
+const AddressSchema = new mongoose.Schema({
+    country: { type: String, required: true },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    zip: { type: String, required: true }
+}, { _id: false }); // _id: false इसे स्वतंत्र MongoDB ID देने से रोकता है
+
 const VendorSchema = new mongoose.Schema({
     vendorName: {
         type: String,
@@ -52,6 +60,21 @@ const VendorSchema = new mongoose.Schema({
         type: String,
         enum: ['Compliant', 'Pending', 'Non-Compliant'],
         default: 'Pending'
+    },
+    // 👇️ NEW FIELD: Company Registered ID
+    registeredId: {
+        type: String,
+        trim: true
+    },
+    
+    // 👇️ NEW FIELD: Billing Address (using AddressSchema)
+    billingAddress: AddressSchema,
+    // 👇️ NEW FIELD: Company Address (using AddressSchema)
+    companyAddress: AddressSchema,
+    // NEW FIELD: Path to the uploaded document on the server
+    documentPath: {
+        type: String,
+        required: false // Document is optional
     },
     // यह ट्रैक करने के लिए कि वेंडर को किसने जोड़ा
     addedBy: {

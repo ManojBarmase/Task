@@ -1,12 +1,13 @@
 // client/src/components/RequestForm.jsx (पूरी फ़ाइल को बदलें)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ArrowLeft, ArrowRight, CornerDownLeft, Loader2, Check, LayoutDashboard } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import MainLayout from './MainLayout';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const departments = ['IT', 'HR', 'Finance', 'Marketing', 'Operations', 'R&D'];
 
 // --- Step Components (Placeholders for now) ---
@@ -213,14 +214,43 @@ const Step4 = ({ formData, handleSubmit, loading }) => (
 const RequestForm = ({ onSave }) => {
     // We remove onClose as it's a full-page component now
     const navigate = useNavigate();
-    const [currentStep, setCurrentStep] = useState(1);
-    const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        cost: '', // Stays as string input
+    // 👇️ NEW: Edit Mode Logic के लिए Hooks का उपयोग करें
+    const { id } = useParams(); // URL से ID प्राप्त करें (जैसे: /requests/edit/:id)
+    const location = useLocation(); // State data प्राप्त करें
+
+    // चेक करें कि यह Edit Mode है या नहीं
+    const isEditMode = id && location.state && location.state.requestData; 
+    const initialData = isEditMode ? location.state.requestData : { 
+        title: '', 
+        description: '', 
+        cost: '', 
         department: departments[0] || '', 
-        vendorName: '',
-    });
+        vendorName: '' 
+    };
+
+    // 👇️ UPDATED: initialData का उपयोग करें
+    const [currentStep, setCurrentStep] = useState(1);
+    const [formData, setFormData] = useState(initialData);   // <-- initialData से शुरू करें
+
+    // 👇️ NEW: Edit Mode में, form data को populate करने के लिए useEffect का उपयोग करें
+    useEffect(() => {
+        if (isEditMode) {
+             // यदि Edit Mode में है, तो currentStep को सीधे Review पर सेट करना उपयोगी हो सकता है, 
+             // लेकिन हम इसे 1 पर ही रहने देंगे ताकि user सारे steps review कर सके।
+
+             // यदि आपके RequestForm.jsx में `department` का default value `departments[0]` है
+             // और API से आया data null या undefined है, तो आप यहां clean-up कर सकते हैं।
+             
+             // API से प्राप्त डेटा में `cost` एक number हो सकता है, जिसे हमें string में बदलना पड़ सकता है:
+             setFormData(prev => ({ 
+                 ...prev, 
+                 cost: String(prev.cost), // cost को string में convert करें (input type="number" के लिए)
+                 // यदि API से प्राप्त department, departments array में नहीं है, तो default department[0] सेट करें
+                 department: departments.includes(prev.department) ? prev.department : departments[0] || ''
+             }));
+        }
+    }, [isEditMode]);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
@@ -247,7 +277,7 @@ const RequestForm = ({ onSave }) => {
 
     // Use window.history.back() or navigate to a specific path
     const handleBackToDashboard = () => {
-        navigate('/dashboard'); 
+        navigate('/requests'); 
     };
 
     const handleSubmit = async () => {
@@ -256,6 +286,8 @@ const RequestForm = ({ onSave }) => {
         setSuccess(false);
         
         const token = localStorage.getItem('token');
+        const method = isEditMode ? 'put' : 'post'; // PUT या POST
+        const url = isEditMode ? `${API_BASE_URL}/api/requests/${id}` : `${API_BASE_URL}/api/requests`; // URL
         
         if (!token) {
             setError("Error: Not authorized. Please log in again.");
@@ -269,11 +301,20 @@ const RequestForm = ({ onSave }) => {
         };
 
         try {
-            const res = await axios.post(`/api/requests`, payload, {
-                headers: { 'x-auth-token': token }
-            });
+            // const res = await axios.post(`${API_BASE_URL}/api/requests`, payload, {
+            //     headers: { 'x-auth-token': token }
+            // });
+            // 👇️ UPDATED: Conditional POST or PUT call
+            const res = await axios({
+                 method: method,
+                 url: url,
+                 data: payload,
+                 headers: { 'x-auth-token': token }
+             });
             
-            setSuccess(true);
+             // Success message को Update करें
+             setSuccess(isEditMode ? 'Request updated successfully! Redirecting...' : 'Request submitted successfully! Redirecting...');
+            // setSuccess(true);
             // onSave(res.data); 
             
             // Redirect back to request list after success
@@ -311,7 +352,7 @@ const RequestForm = ({ onSave }) => {
                         >
                             {/* 👇️ FIX: MainLayout के बजाय LayoutDashboard का उपयोग करें */}
                             <LayoutDashboard className="w-5 h-5 mr-3" /> 
-                            Back to Dashboard
+                            Back to Requests 
                         </button>
                     </nav>
                 </div>

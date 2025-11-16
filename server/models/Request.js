@@ -28,8 +28,18 @@ const RequestSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Pending', 'In Review', 'Approved', 'Rejected'],
+        enum: ['Pending', 'Clarification Needed','In Review', 'Approved', 'Rejected'],
         default: 'Pending'
+    },
+    // 👇️ NEW FIELD 1: Admin/Approver Notes (For Reviewer to send back questions/comments)
+    reviewerNotes: {
+        type: String,
+        default: ''
+    },
+    // 👇️ NEW FIELD 2: Employee Response to Notes
+    requesterReply: {
+        type: String,
+        default: ''
     },
     requester: { // किस यूज़र ने यह अनुरोध बनाया
         type: mongoose.Schema.Types.ObjectId,

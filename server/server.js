@@ -1,3 +1,4 @@
+// server/server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -24,9 +25,32 @@ if (!JWT_SECRET) {
     console.error("JWT_SECRET is not set. Check your .env file.");
 }
 
+// 1. Allowed Origins को Environment Variable से पढ़ें
+const allowedOrigins = [
+  process.env.FRONTEND_URL, // Render URL या लोकल http://localhost:5173
+  'http://localhost:5173',  // Local Vite Dev Server का default port
+  'http://127.0.0.1:5173'
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // अगर origin allowedOrigins में है, या अगर origin undefined है (जैसे local server-to-server calls)
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // अगर आप cookies या sessions का उपयोग कर रहे हैं
+};
+
+app.use(cors(corsOptions));
+
 // Middleware
-app.use(cors()); 
+// app.use(cors()); 
 app.use(express.json()); 
+
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // 2. MongoDB Connection...
 if (!MONGO_URI) {
@@ -65,9 +89,19 @@ app.get('/api/status', (req, res) => {
 // Render recommends placing the static middleware and catch-all handler AFTER all API routes.
 app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
 
-// FIX: Reverting to simple '*' which is stable on Express 4.x
-app.get('*', (req, res) => { 
-  res.sendFile(path.resolve(__dirname, '..', 'client', 'dist', 'index.html'));
+// // FIX: Reverting to simple '*' which is stable on Express 4.x
+// app.get('*', (req, res) => { 
+//   res.sendFile(path.resolve(__dirname, '..', 'client', 'dist', 'index.html'));
+// });
+app.use((req, res, next) => {
+    // अगर कोई भी API रूट या स्टैटिक फ़ाइल नहीं मिली है,
+    // और रिक्वेस्ट GET है (ब्राउज़र नेविगेशन के लिए), तो index.html भेजें।
+    if (req.method === 'GET') {
+        res.sendFile(path.resolve(__dirname, '..', 'client', 'dist', 'index.html'));
+    } else {
+        // 404/Not Found हैंडलिंग
+        next();
+    }
 });
 
 // 5. Server Start करें

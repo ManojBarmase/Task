@@ -7,6 +7,7 @@ import { Mail, Lock, Chrome, Check } from 'lucide-react'; // Icons
 
 // Backend API URL (Vite environment variable से)
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
@@ -21,7 +22,7 @@ const LoginScreen = () => {
         setMessage('');
 
         try {
-            const response = await axios.post(`/api/auth/login`, { 
+            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { 
                 email, 
                 password 
             });
@@ -31,8 +32,17 @@ const LoginScreen = () => {
 
             setMessage('✅ Login Successful! Redirecting...');
             
+            // setTimeout(() => {
+            //     navigate('/dashboard'); 
+            // }, 1500);
             setTimeout(() => {
-                navigate('/dashboard'); 
+                // 👈️ नया रोल-बेस्ड रीडायरेक्ट
+                const userRole = localStorage.getItem('userRole');
+                if (userRole === 'admin' || userRole === 'approver') {
+                    navigate('/approvals');
+                } else {
+                    navigate('/requests');
+                }
             }, 1500);
 
         } catch (error) {
