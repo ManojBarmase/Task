@@ -128,5 +128,23 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+// 2. 👇 YEH NAYA ROUTE ADD KAREIN (Get Single Vendor by ID)
+router.get('/:id', auth, async (req, res) => {
+    try {
+        const vendor = await Vendor.findById(req.params.id);
+
+        if (!vendor) {
+            return res.status(404).json({ msg: 'Vendor not found' });
+        }
+
+        res.json(vendor);
+    } catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') {
+            return res.status(404).json({ msg: 'Vendor not found (invalid ID)' });
+        }
+        res.status(500).send('Server Error');
+    }
+});
 
 module.exports = router;

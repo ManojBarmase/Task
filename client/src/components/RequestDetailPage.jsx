@@ -21,35 +21,38 @@ const formatCurrency = (amount) => {
 // --- Helper: Status Pill (आपके स्क्रीनशॉट के आधार पर) ---
 const getStatusPill = (status) => {
     let classes = 'inline-flex items-center px-3 py-1 text-sm font-medium rounded-full';
-    let icon = Clock;
+    
+    // 👇️ CHANGED: variable 'icon' का नाम बदलकर 'Icon' (बड़ा I) कर दिया गया है
+    let Icon = Clock; 
     
     switch (status) {
         case 'Approved':
             classes += ' bg-green-200 text-green-800';
-            icon = Check;
+            Icon = Check; // 👈️ बदला गया
             break;
         case 'Rejected':
             classes += ' bg-red-200 text-red-800';
-            icon = X;
+            Icon = X; // 👈️ बदला गया
             break;
         case 'Clarification Needed':
             classes += ' bg-orange-200 text-orange-800';
-            icon = HelpCircle;
+            Icon = HelpCircle; // 👈️ बदला गया
             break;
         case 'In Review':
             classes += ' bg-blue-200 text-blue-800';
-            icon = Eye;
+            Icon = Eye; // 👈️ बदला गया
             break;
         case 'Pending':
         default:
             classes += ' bg-yellow-200 text-yellow-800';
-            icon = Clock;
+            Icon = Clock; // 👈️ बदला गया
             break;
     }
 
     return (
         <span className={classes}>
-            <icon className="w-4 h-4 mr-1.5" />
+            {/* 👇️ CHANGED: अब यह 'Icon' variable को सही से रेंडर करेगा */}
+            <Icon className="w-4 h-4 mr-1.5" />
             {status}
         </span>
     );

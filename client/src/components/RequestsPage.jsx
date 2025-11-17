@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 // 👇️ CHANGED: 'HelpCircle' (Clarification Needed के लिए) और 'MailOpen' (Reply देखने के लिए) आइकन जोड़े गए
-import { Mail, MessageSquare, CornerDownRight, AlertTriangle, Loader2, Edit, Trash, Filter, Plus, Clock, Eye, Check, X, CornerDownLeft, HelpCircle, MailOpen } from 'lucide-react';
+import { Mail, MessageSquare, CornerDownRight, AlertTriangle, Loader2, Edit, Trash, Filter, Plus, Clock, Eye, Check, X, CornerDownLeft, HelpCircle, MailOpen,Send } from 'lucide-react';
 import RequestForm from './RequestForm'; // RequestForm का उपयोग करें
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -68,7 +68,9 @@ const RequestsPage = () => {
     const [departmentFilter, setDepartmentFilter] = useState('All');
     const navigate = useNavigate();
     const location = useLocation();
-    const [costFilter, setCostFilter] = useState(100000000000); // 10 Million
+//     const [costFilter, setCostFilter] = useState(100000000000); 
+    const [titleFilter, setTitleFilter] = useState(''); // 👈️ 1. यह नई लाइन जोड़ें
+    const [costRange, setCostRange] = useState('All Costs'); // 👈️ 2. यह लाइन बदलें (पहले costFilter थी)
     const token = localStorage.getItem('token');
     const [userRole, setUserRole] = useState(localStorage.getItem('userRole'));
     const isEmployee = userRole === 'employee';
@@ -196,17 +198,51 @@ const RequestsPage = () => {
         }
     }, [token, location.state]);
 
-    useEffect(() => {
+//     useEffect(() => {
+//         let currentFiltered = allRequests;
+//         if (activeTab !== 'All') {
+//             currentFiltered = currentFiltered.filter(req => req.status === activeTab);
+//         }
+//         if (departmentFilter !== 'All') {
+//             currentFiltered = currentFiltered.filter(req => req.department === departmentFilter);
+//         }
+//         currentFiltered = currentFiltered.filter(req => Number(req.cost) <= costFilter);
+//         setFilteredRequests(currentFiltered);
+//     }, [allRequests, activeTab, departmentFilter, costFilter]);
+useEffect(() => {
         let currentFiltered = allRequests;
+        
+        // 1. Filter by Status (activeTab)
         if (activeTab !== 'All') {
             currentFiltered = currentFiltered.filter(req => req.status === activeTab);
         }
+
+        // 2. Filter by Department
         if (departmentFilter !== 'All') {
             currentFiltered = currentFiltered.filter(req => req.department === departmentFilter);
         }
-        currentFiltered = currentFiltered.filter(req => Number(req.cost) <= costFilter);
+        
+        // 👇️ CHANGED: 'titleFilter' के लिए लॉजिक जोड़ा गया
+        if (titleFilter) {
+            currentFiltered = currentFiltered.filter(req =>
+                req.title.toLowerCase().includes(titleFilter.toLowerCase())
+            );
+        }
+        
+        // 👇️ CHANGED: 'costRange' (dropdown) के लिए लॉजिक अपडेट किया गया
+        if (costRange !== 'All Costs') {
+            if (costRange === '10000+') {
+                currentFiltered = currentFiltered.filter(req => req.cost >= 10000);
+            } else {
+                const [min, max] = costRange.split('-').map(Number);
+                currentFiltered = currentFiltered.filter(req => req.cost >= min && req.cost <= max);
+            }
+        }
+        
         setFilteredRequests(currentFiltered);
-    }, [allRequests, activeTab, departmentFilter, costFilter]);
+        
+    // 👇️ CHANGED: नई dependencies जोड़ी गईं
+    }, [allRequests, activeTab, departmentFilter, titleFilter, costRange]);
 
     // 👇️ CHANGED: Metric cards के लिए 'clarificationCount' जोड़ा गया
     const pendingCount = allRequests.filter(req => req.status === 'Pending').length;
@@ -247,7 +283,7 @@ const RequestsPage = () => {
             <p className="text-gray-600 -mt-4 mb-6">Manage all procurement requests.</p>
             
             {/* Filter Card (कोई बदलाव नहीं) */}
-            {showFilterOptions && (
+{/*             {showFilterOptions && (
                 <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-4">
                     <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -279,7 +315,85 @@ const RequestsPage = () => {
                         </div>
                     </div>
                 </div>
+            )} */}
+{/* 👇️ CHANGED: यह पूरा फ़िल्टर पैनल आपके स्क्रीनशॉट (100) जैसा अपडेट किया गया है */}
+            {showFilterOptions && (
+                <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Filter Requests</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        
+                        {/* 1. Request Title Search */}
+                        <div>
+                            <label htmlFor="titleFilter" className="block text-sm font-medium text-gray-700">Request Title</label>
+                            <input
+                                type="text"
+                                name="titleFilter"
+                                id="titleFilter"
+                                value={titleFilter}
+                                onChange={(e) => setTitleFilter(e.target.value)}
+                                className="mt-1 block w-full border border-gray-300 bg-gray-50 rounded-md shadow-sm p-2.5 focus:ring-sky-500 focus:border-sky-500 text-sm"
+                                placeholder="Search by title..."
+                            />
+                        </div>
+
+                        {/* 2. Department Filter */}
+                        <div>
+                            <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
+                            <select
+                                name="department"
+                                id="department"
+                                value={departmentFilter}
+                                onChange={(e) => setDepartmentFilter(e.target.value)}
+                                className="mt-1 block w-full border border-gray-300 bg-gray-50 rounded-md shadow-sm p-2.5 focus:ring-sky-500 focus:border-sky-500 text-sm"
+                            >
+                                <option value="All">All Departments</option>
+                                {['IT', 'HR', 'Finance', 'Marketing', 'Operations', 'R&D'].map(dept => (
+                                    <option key={dept} value={dept}>{dept}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* 3. Cost Range Filter */}
+                        <div>
+                            <label htmlFor="costRange" className="block text-sm font-medium text-gray-700">Cost Range</label>
+                            <select
+                                name="costRange"
+                                id="costRange"
+                                value={costRange}
+                                onChange={(e) => setCostRange(e.target.value)}
+                                className="mt-1 block w-full border border-gray-300 bg-gray-50 rounded-md shadow-sm p-2.5 focus:ring-sky-500 focus:border-sky-500 text-sm"
+                            >
+                                <option value="All Costs">All Costs</option>
+                                <option value="0-1000">$0 - $1,000</option>
+                                <option value="1001-5000">$1,001 - $5,000</option>
+                                <option value="5001-10000">$5,001 - $10,000</option>
+                                <option value="10000+">$10,000+</option>
+                            </select>
+                        </div>
+                        
+                        {/* 4. Status Filter (यह activeTab state को कंट्रोल करेगा) */}
+                        <div>
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
+                            <select
+                                name="status"
+                                id="status"
+                                value={activeTab} // 👈️ यह 'activeTab' का उपयोग करता है
+                                onChange={(e) => setActiveTab(e.target.value)} // 👈️ यह 'setActiveTab' का उपयोग करता है
+                                className="mt-1 block w-full border border-gray-300 bg-gray-50 rounded-md shadow-sm p-2.5 focus:ring-sky-500 focus:border-sky-500 text-sm"
+                            >
+                                <option value="All">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Clarification Needed">Clarification Needed</option>
+                                <option value="In Review">In Review</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                    
+                    </div>
+                </div>
             )}
+            {/* 👆️ END NEW Filter Panel */}
             
             {/* 👇️ CHANGED: Metric Cards को 'Clarification Needed' शामिल करने के लिए अपडेट किया गया */}
             <div className="grid grid-cols-4 gap-6 mb-6"> {/* 4-कॉलम ग्रिड */}
@@ -355,6 +469,7 @@ const RequestsPage = () => {
                                     <td className="px-3 py-2 whitespace-nowrap">{getStatusPill(request.status)}</td>
                                     
                                     {/* 👇️ CHANGED: Actions Cell का पूरा लॉजिक अपडेट किया गया */}
+                                    {/* 👇️ CHANGED: Actions Cell का पूरा लॉजिक अपडेट किया गया */}
                                     <td className="px-8 py-2 whitespace-nowrap text-sm font-medium text-center" onClick={(e) => e.stopPropagation()}>
     
                                         {/* 1. Status: Pending */}
@@ -363,94 +478,115 @@ const RequestsPage = () => {
                                                 {isAdminOrApprover && (
                                                     <button 
                                                         onClick={() => handleClarificationClick(request)}
-                                                        title="Review / Request Clarification"
-                                                        className="text-orange-600 hover:text-orange-800 p-2 rounded-full hover:bg-orange-100 transition-colors"
+                                                        className="relative group text-yellow-800 p-2 rounded-full transition-colors "
                                                     >
-                                                        <CornerDownRight className="w-5 h-5" /> 
+                                                        <Send className="w-5 h-5" /> 
+                                                        {/* Custom Tooltip */}
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
+                                                            Clarification Requested
+                                                        </span>
                                                     </button>
                                                 )}
                                                 {isEmployee && (
                                                     <button 
                                                         onClick={() => handleEdit(request)}
-                                                        title="Edit Request"
-                                                        className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-blue-100 transition-colors"
+                                                        className="relative group text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-blue-100 transition-colors"
                                                     >
                                                         <Edit className="w-4 h-4" />
+                                                        {/* Custom Tooltip */}
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
+                                                            Edit Request
+                                                        </span>
                                                     </button>
                                                 )}
                                         </>
                                         )}
 
-                                        {/* 2. Status: Clarification Needed (NEW) */}
+                                        {/* 2. Status: Clarification Needed */}
                                         {request.status === 'Clarification Needed' && (
                                             <>
                                                 {isEmployee && (
                                                     <button 
                                                         onClick={() => handleReplyClick(request)}
-                                                        title="Reply to Reviewer Notes"
-                                                        className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 transition-colors"
+                                                        className="relative group text-orange-800 hover: p-2 rounded-full hover:bg-orange-200 transition-colors"
                                                     >
-                                                        <Mail className="w-5 h-5" /> 
+                                                        <MailOpen className="w-5 h-5" />
+                                                        {/* Custom Tooltip */}
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
+                                                             Action required
+                                                        </span>
                                                     </button>
                                                 )}
                                                 {isAdminOrApprover && (
                                                     <span 
-                                                        onClick={() => handleReplyClick(request)} // नोट्स देखने के लिए Modal खोलें
-                                                        title="View Notes (Waiting for Employee)"
-                                                        className="text-gray-400 p-2 rounded-full cursor-pointer"
+                                                        onClick={() => handleReplyClick(request)}
+                                                        className="relative group text-orange-800 p-2 rounded-full cursor-pointer"
                                                     >
-                                                        <MailOpen className="w-5 h-5" />
+                                                        <MailOpen className="w-5 h-5" />
+                                                       {/* Custom Tooltip */}
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
+                                                             Read
+                                                        </span>
                                                     </span>
                                                 )}
                                         </>
                                         )}
 
-                                        {/* 3. Status: In Review (लॉजिक बदला गया) */}
+                                        {/* 3. Status: In Review */}
                                         {request.status === 'In Review' && (
                                             <>
                                                 {isAdminOrApprover && (
                                                     <button 
                                                         onClick={() => handleClarificationClick(request)} 
-                                                        title="View Employee Reply / Request More Clarification"
-                                                        className="text-indigo-600 hover:text-indigo-800 p-2 rounded-full hover:bg-indigo-100 transition-colors"
+                                                        className="relative group text-blue-800 hover: p-2 rounded-full hover:bg-blue-200 transition-colors"
                                                     >
-                                                        <MessageSquare className="w-5 h-5" /> 
+                                                        <Mail className="w-5 h-5" />
+                                                        {/* Custom Tooltip */}
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
+                                                            Clarification Received
+                                                        </span>
                                                     </button>
                                                 )}
                                                 {isEmployee && (
                                                     <span 
-                                                        onClick={() => handleReplyClick(request)} // नोट्स देखने के लिए
-                                                        title="View Notes (Waiting for Admin)"
-                                                        className="text-gray-400 p-2 rounded-full cursor-pointer"
-                                                    >
-                                                        <MailOpen className="w-5 h-5" />
+                                                        onClick={() => handleReplyClick(request)}
+                                                        className="relative group text-blue-800 p-2 rounded-full cursor-pointer"
+                                                 >
+                                                        <Mail className="w-5 h-5" />
+                                                        {/* Custom Tooltip */}
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
+                                                            View Notes (Waiting for Admin)
+                                                        </span>
                                                     </span>
                                                 )}
-                                        </>
+                                      </>
                                         )}
 
-                                        {/* 4. Status: Approved/Rejected (लॉजिक बदला गया) */}
+                                        {/* 4. Status: Approved/Rejected */}
                                         {(request.status === 'Approved' || request.status === 'Rejected') && (
                                             <span 
                                                 onClick={() => handleReplyClick(request)} 
-                                                title="View Communication History"
-                                                className={`p-2 rounded-full cursor-pointer transition-colors ${
+                                                className={`relative group p-2 rounded-full cursor-pointer transition-colors ${
                                                     (request.reviewerNotes || request.requesterReply) 
-                                                    ? 'text-gray-500 hover:text-green-600 hover:bg-green-100' // अगर नोट्स हैं
-                                                    : 'text-gray-300' // अगर नोट्स नहीं हैं
+                                                    ? 'text-gray-500 hover:text-green-600 hover:bg-green-100'
+                                                 : 'text-gray-300'
                                                 }`}
                                             >
                                                 <MessageSquare className="w-5 h-5" />
+                                                {/* Custom Tooltip */}
+                                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
+                                                    View Communication History
+                                  </span>
                                             </span>
                                         )}
     
                                     </td>
-                                    {/* 👆️ END ACTIONS CELL CHANGE */}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
+                {/* ... (rest of the file) ... */}
 
                 {filteredRequests.length === 0 && (
                     <div className="text-center py-8 text-gray-500">No {activeTab.toLowerCase()} requests found.</div>

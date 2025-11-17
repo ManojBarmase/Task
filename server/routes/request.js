@@ -12,13 +12,14 @@ const role = require('../middleware/role');
 // ⭐ (कोई बदलाव नहीं - यह सही है)
 router.post('/', auth, async (req, res) => {
     try {
-        const { title, description, cost, department } = req.body;
+        const { title, description, cost, department, vendorName } = req.body;
 
         const newRequest = new Request({
             title,
             description,
             cost,
             department,
+            vendorName: vendorName || '',
             requester: req.user.id, // Auth middleware से यूज़र ID प्राप्त करें
             status: 'Pending'
         });
@@ -113,6 +114,52 @@ router.get('/:id', auth, async (req, res) => {
         if (err.kind === 'ObjectId') {
             return res.status(404).json({ msg: 'Request not found' });
         }
+        res.status(500).send('Server error');
+    }
+});
+
+// @route   PUT api/requests/:id
+// @desc    Employee edits their own request
+// @access  Private (Employee only)
+router.put('/:id', auth, role(['employee']), async (req, res) => {
+    const { title, description, cost, department, vendorName } = req.body;
+    
+    try {
+        let request = await Request.findById(req.params.id);
+
+        if (!request) {
+            return res.status(404).json({ msg: 'Request not found' });
+        }
+
+        // 1. सुरक्षा जांच: क्या यह वही कर्मचारी है जिसने इसे बनाया है?
+        if (request.requester.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        // 2. लॉजिक जांच: क्या रिक्वेस्ट अभी भी 'Pending' है?
+        if (request.status !== 'Pending') {
+            return res.status(400).json({ msg: 'Cannot edit a request that is already under review.' });
+        }
+
+        // 3. अपडेट करें
+        const updatedFields = {
+            title,
+            description,
+            cost: parseFloat(cost) || 0,
+            department,
+            vendorName: vendorName || ''
+        };
+
+        request = await Request.findByIdAndUpdate(
+            req.params.id,
+            { $set: updatedFields },
+            { new: true }
+        ).populate('requester', ['name', 'email']); // फ्रंटएंड को अपडेटेड डेटा भेजें
+
+        res.json(request);
+
+    } catch (err) {
+        console.error(err.message);
         res.status(500).send('Server error');
     }
 });

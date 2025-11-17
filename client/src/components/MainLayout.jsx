@@ -1,20 +1,24 @@
  // client/src/components/MainLayout.jsx 
 
 import React, { useState } from 'react';
-import { NavLink, useNavigate, Outlet } from 'react-router-dom';
-import { LogOut, CheckSquare, Clock, Users, DollarSign, TrendingUp, LayoutDashboard, BarChart3 } from 'lucide-react';
-import UserProfileModal from './UserProfileModal'
+import { NavLink, useNavigate, Outlet, Link } from 'react-router-dom';
+import { LogOut, CheckSquare, Clock, Users, DollarSign, TrendingUp, LayoutDashboard, BarChart3, User } from 'lucide-react';
+// import UserProfileModal from './UserProfileModal'
 const MainLayout = () => {
     const navigate = useNavigate();
-    // const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Small screen toggle (Optional)
+   
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false); // 👈️ 1. ड्रॉपडाउन के लिए
+const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);   // 👈️ 2. मोडल के लिए
 
-    // 👈️ नया स्टेट: प्रोफाइल मॉडल की स्थिति ट्रैक करने के लिए
-    const [isProfileOpen, setIsProfileOpen] = useState(false); 
-    
-    // 👈️ नया हैंडलर: क्लिक करने पर स्थिति बदलने के लिए
-    const toggleProfile = () => {
-        setIsProfileOpen(!isProfileOpen);
-    };
+// ड्रॉपडाउन को टॉगल करने का फ़ंक्शन
+const toggleProfileDropdown = () => {
+    setIsProfileDropdownOpen(!isProfileDropdownOpen);
+};
+
+// मोडल को टॉगल करने का फ़ंक्शन
+const toggleProfileModal = () => {
+    setIsProfileModalOpen(!isProfileModalOpen);
+}
 
     const userRole = localStorage.getItem('userRole'); 
     const isApprover = userRole === 'approver' || userRole === 'admin'; 
@@ -72,15 +76,7 @@ const navLinks = [
                 </nav>
             </div>
 
-            {/* <div className="p-4 border-t border-gray-200">
-                <button 
-                    onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-2.5 text-white hover:bg-sky-900 hover:text-white rounded-lg transition-colors"
-                >
-                    <LogOut className="w-5 h-5 mr-3" />
-                    Log Out
-                </button>
-            </div> */}
+            
         </div>
     );
     // ----------------------------------------------------
@@ -104,10 +100,41 @@ const navLinks = [
                    <div className="flex items-center space-x-4 relative"> {/* relative जोड़ा गया ताकि मॉडल को absolute position दी जा सके */}
                         <span 
                             className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-sky-600 text-white font-bold cursor-pointer transition-shadow hover:shadow-lg"
-                            onClick={toggleProfile} // 👈️ यहां क्लिक हैंडलर जोड़ा गया
+                            onClick={toggleProfileDropdown} // 👈️ यहां क्लिक हैंडलर जोड़ा गया
                         >
                             {userNameInitial}
                         </span>
+                        {/* 👇️ NEW: Profile Dropdown (Screenshot 101) */}
+                                {isProfileDropdownOpen && (
+                                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border z-20">
+                                        <div className="px-4 py-3 border-b">
+                                            <p className="text-sm font-medium text-gray-900 truncate">My Account</p>
+                                        </div>
+                                        <div className="py-1">
+                                            <Link
+                                                to="/profile" // Step 2 wale route par bhejega
+                                                onClick={() => setIsProfileDropdownOpen(false)} // Sirf dropdown band karega
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                              >
+                                                <User className="w-4 h-4 mr-2" /> My Profile
+                                            </Link>
+                                            <button
+                                                // (Requestors page ke liye)
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                            >
+                                                <Users className="w-4 h-4 mr-2" /> Requestors
+                                            </button>
+                                            <div className="border-t my-1"></div>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
+                                            >
+                                                <LogOut className="w-4 h-4 mr-2" /> Logout
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                        {/* 👆️ END NEW */}
                     </div>
                 </header>
 
@@ -118,13 +145,7 @@ const navLinks = [
                 </main>
             </div>
 
-           {/* 👈️ Conditional Rendering: मॉडल को यहां रेंडर करें */}
-            {/* {isProfileOpen && <UserProfileModal onClose={toggleProfile} />} */}
-           {/* 👈️ Profile Modal को अपडेट करें */}
-            {isProfileOpen && <UserProfileModal 
-                onClose={toggleProfile} 
-                onLogout={handleLogout} // 👈️ यहां onLogout प्रॉप पास करें
-            />}
+          
         </div>
     );
 };

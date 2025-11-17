@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Search, Loader2 } from 'lucide-react';
 import AddVendorForm from './AddVendorForm';
+import { useNavigate } from 'react-router-dom';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -79,7 +80,7 @@ const VendorsPage = () => {
     const [selectedCategory, setSelectedCategory] = useState('All Categories'); // 👈️ नया State
     const [selectedStatus, setSelectedStatus] = useState('All Status');
     const [showAddVendorForm, setShowAddVendorForm] = useState(false);
-
+    const navigate = useNavigate();
 
     const token = localStorage.getItem('token');
 
@@ -240,7 +241,11 @@ const VendorsPage = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredVendors.map((vendor) => (
-                                <tr key={vendor._id} className="hover:bg-sky-50">
+                               <tr 
+                                    key={vendor._id} 
+                                    className="hover:bg-sky-50 cursor-pointer" // 👈 Class add karein
+                                    onClick={() => navigate(`/vendors/${vendor._id}`)} // 👈 onClick add karein
+                                >
                                     <td className="px-6 py-3 whitespace-nowrap text-sm font-normal text-gray-800">
                                         <div className="flex items-center">
                                             <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-sky-800 text-white font-normal text-xs mr-3">

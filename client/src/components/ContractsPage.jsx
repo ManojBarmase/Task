@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Loader2, TrendingUp, Upload, CornerUpRight } from 'lucide-react';
 import UploadContractForm from './UploadContractForm';
 import RenewContractForm from './RenewContractForm';
+import { useNavigate } from 'react-router-dom';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -89,7 +90,7 @@ const ContractsPage = () => {
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [showRenewForm, setShowRenewForm] = useState(false);
     const token = localStorage.getItem('token');
-
+const navigate = useNavigate();
    
 
     // Fetch Contracts
@@ -226,7 +227,11 @@ const ContractsPage = () => {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {contracts.map((contract) => (
-                                    <tr key={contract._id} className="hover:bg-gray-50">
+                                    <tr 
+                                    key={contract._id} 
+                                    className="hover:bg-gray-50 cursor-pointer" // 👈 Class add karein
+                                    onClick={() => navigate(`/contracts/${contract._id}`)} // 👈 onClick add karein
+                                >
                                         <td className="px-6 py-3 whitespace-nowrap text-sm font-normal text-gray-900">
                                             <div className="flex flex-col">
                                                 <span>{contract.vendor?.vendorName || 'N/A'}</span>

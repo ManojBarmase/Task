@@ -63,6 +63,26 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+// 2. 👇 YEH NAYA ROUTE ADD KAREIN (Get Single Contract by ID)
+router.get('/:id', auth, async (req, res) => {
+    try {
+        const contract = await Contract.findById(req.params.id)
+            .populate('vendor', 'vendorName contactName contactEmail phone'); // 👈 Vendor ki zaroori details populate karein
+
+        if (!contract) {
+            return res.status(404).json({ msg: 'Contract not found' });
+        }
+
+        res.json(contract);
+    } catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') {
+            return res.status(404).json({ msg: 'Contract not found (invalid ID)' });
+        }
+        res.status(500).send('Server Error');
+    }
+});
+
 // @route   PUT api/contracts/:id
 // @desc    Update a contract (for renewal)
 // @access  Private

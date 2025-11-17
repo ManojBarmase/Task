@@ -323,6 +323,16 @@ const ApprovalsPage = () => {
                                         </div>
 
                                     <div className="flex space-x-3 mt-6">
+                                         {/* 👇️ NEW: Request Clarification Button */}
+                                        <button
+                                            onClick={() => handleRequestClarification(request._id)}
+                                            disabled={updatingId === request._id || !notes[request._id]}
+                                            className={`flex items-center justify-center w-full py-2 text-base font-medium rounded-lg transition-colors 
+                                              ${updatingId === request._id || !notes[request._id] ? 'bg-gray-400 cursor-not-allowed' : 'bg-sky-600 text-white hover:bg-sky-700'}`}
+                                        >
+                                            {updatingId === request._id ? '...' : <><HelpCircle className="w-5 h-5 mr-2" /> Clarify</>}
+                                       </button>
+
                                        {/* Approve Button */}
                                         <button
                                             onClick={() => handleStatusUpdate(request._id, 'Approved')}
@@ -343,15 +353,7 @@ const ApprovalsPage = () => {
                                             {updatingId === request._id ? '...' : <><X className="w-5 h-5 mr-2" /> Reject</>}
                                   </button>
 
-                                        {/* 👇️ NEW: Request Clarification Button */}
-                                        <button
-                                            onClick={() => handleRequestClarification(request._id)}
-                                      disabled={updatingId === request._id || !notes[request._id]}
-                                            className={`flex items-center justify-center w-full py-2 text-base font-medium rounded-lg transition-colors 
-                                              ${updatingId === request._id || !notes[request._id] ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-600 text-white hover:bg-orange-700'}`}
-                                        >
-                                            {updatingId === request._id ? '...' : <><HelpCircle className="w-5 h-5 mr-2" /> Clarify</>}
-                                 </button>
+                                       
                                     </div>
                                     </>
                                 )}

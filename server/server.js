@@ -6,6 +6,7 @@ require('dotenv').config();
 const seedDatabase = require('./seedData');
 const path = require('path');
 
+
 // --- 1. Import All Routes Explicitly ---
 const authRoutes = require('./routes/auth'); 
 const dashboardRoutes = require('./routes/dashboard');
@@ -29,7 +30,8 @@ if (!JWT_SECRET) {
 const allowedOrigins = [
   process.env.FRONTEND_URL, // Render URL या लोकल http://localhost:5173
   'http://localhost:5173',  // Local Vite Dev Server का default port
-  'http://127.0.0.1:5173'
+  'http://127.0.0.1:5173',
+  'http://localhost:5174'
 ];
 
 const corsOptions = {
@@ -50,8 +52,7 @@ app.use(cors(corsOptions));
 // app.use(cors()); 
 app.use(express.json()); 
 
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 2. MongoDB Connection...
 if (!MONGO_URI) {
     console.error("❌ ERROR: MONGO_URI is not defined in .env file.");

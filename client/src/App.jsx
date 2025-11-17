@@ -14,6 +14,9 @@ import ContractsPage from './components/ContractsPage';
 import IntegrationsPage from './components/IntegrationsPage';
 import RequestForm from './components/RequestForm';
 import RequestDetailPage from './components/RequestDetailPage';
+import ProfileSettings from './components/ProfileSettings';
+import VendorDetailsPage from './components/VendorDetailsPage';
+import ContractDetailsPage from './components/ContractDetailsPage';
 
 // Protected Route Component (इसे सरल रखें)
 const ProtectedRoute = ({ element: Element, ...rest }) => {
@@ -43,9 +46,12 @@ const App = () => {
                     <Route path="/requests" element={<RequestsPage />} />
                     <Route path="/requests/:id" element={<RequestDetailPage />} />
                     <Route path="/vendors" element={<VendorsPage />} />
+                    <Route path="vendors/:id" element={<VendorDetailsPage />} />
                     <Route path="/contracts" element={<ContractsPage />} />
+                    <Route path="contracts/:id" element={<ContractDetailsPage />} />
                     <Route path="/integrations" element={<IntegrationsPage />} />
                     <Route path="/analytics" element={<AnalyticsPage />} />
+                    <Route path="profile" element={<ProfileSettings />} />
                 </Route>
                   
 
