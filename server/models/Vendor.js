@@ -5,10 +5,18 @@ const mongoose = require('mongoose');
 // Address Sub-schema (Billing और Company Address दोनों के लिए इसका उपयोग करेंगे)
 const AddressSchema = new mongoose.Schema({
     country: { type: String, required: true },
-    address: { type: String, required: true },
+    state: { type: String, required: true },
     city: { type: String, required: true },
+    address: { type: String, required: true },
     zip: { type: String, required: true }
 }, { _id: false }); // _id: false इसे स्वतंत्र MongoDB ID देने से रोकता है
+
+// --- 1. YEH NAYA SUB-SCHEMA BANAYEIN ---
+const ContactPersonSchema = new mongoose.Schema({
+    name: { type: String, trim: true },
+    email: { type: String, trim: true },
+    phone: { type: String, trim: true }
+}, { _id: false });
 
 const VendorSchema = new mongoose.Schema({
     vendorName: {
@@ -26,16 +34,26 @@ const VendorSchema = new mongoose.Schema({
         enum: ['Productivity', 'Communication', 'Project Management', 'Cloud Services', 'Hardware', 'Other', 'CRM','Development','Design Software'],
         default: 'Other'
     },
-    contactPerson: { // 👈️ नया फ़ील्ड
-        type: String,
-        trim: true
-    },
+    // contactPerson: { // 👈️ नया फ़ील्ड
+    //     type: String,
+    //     trim: true
+    // },
     contactEmail: {
         type: String,
         required: true,
         match: [/.+\@.+\..+/, 'Please fill a valid email address']
     },
     phoneNumber: { // 👈️ नया फ़ील्ड
+        type: String,
+        trim: true
+    },
+    primaryContact: ContactPersonSchema,
+    // Company ka general email/phone alag se rakhein (agar zaroori hai)
+    companyEmail: { 
+        type: String,
+        required: true,
+    },
+    companyPhone: {
         type: String,
         trim: true
     },

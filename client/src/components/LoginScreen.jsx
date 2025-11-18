@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Chrome, Check } from 'lucide-react'; // Icons
+import logo1 from '../assets/logo1.png';
 
 // Backend API URL (Vite environment variable से)
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -64,11 +65,13 @@ const LoginScreen = () => {
                 
                 {/* Header (Logo and Description) */}
                 <div className="text-center space-y-3">
-                    <div className="flex flex-col items-center justify-center">
-                        <Mail className="h-10 w-10 text-sky-600" />
-                        <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight mt-1">
-                            ProcureIQ
-                        </h1>
+                    <div className="flex px-0 py-1 flex-col items-center justify-center">
+                        {/* 👇 YAHAN LOGO LAGAYA HAI */}
+                        <img 
+                            src={logo1} 
+                            alt="ProcureIQ Logo" 
+                            className="h-16 w-auto mb-2 object-contain" // h-16 size adjust karne ke liye hai
+                        />
                     </div>
                     <p className="text-sm text-gray-600 pt-2">
                         Sign in to your ProcureIQ account

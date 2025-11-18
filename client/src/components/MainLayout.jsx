@@ -4,6 +4,10 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet, Link } from 'react-router-dom';
 import { LogOut, CheckSquare, Clock, Users, DollarSign, TrendingUp, LayoutDashboard, BarChart3, User } from 'lucide-react';
 // import UserProfileModal from './UserProfileModal'
+
+// 👇 1. APNA LOGO IMPORT KAREIN (Path check kar lein)
+import logo from '../assets/logo.png';
+
 const MainLayout = () => {
     const navigate = useNavigate();
    
@@ -59,8 +63,14 @@ const navLinks = [
     // --- Sidebar JSX ---
     const Sidebar = (
         <div className="flex flex-col flex-shrink-0 bg-sky-800 border-r border-gray-200 h-full" style={{ width: '256px' }}> {/* h-full जोड़ा गया */}
-            <div className="h-16 flex items-center justify-center border-b border-gray-200">
-                <h1 className="text-xl font-normal text-white">ProcureIQ</h1>
+            <div className="h-16 p-5 flex items-center justify-center border-b border-gray-200 bg-sky-900">
+                {/* <h1 className="text-xl font-normal text-white">ProcureIQ</h1> */}
+                {/* NAYA CODE (Logo Lagayein): */}
+                <img 
+                    src={logo} 
+                    alt="ProcureIQ Logo" 
+                    className="h-10 w-auto object-contain" // h-10 size adjust karne ke liye hai
+                />
             </div>
 
             <div className="flex-1 flex flex-col pt-6 pb-4 overflow-y-auto"> {/* Sidebar Navigation Scrollable */}

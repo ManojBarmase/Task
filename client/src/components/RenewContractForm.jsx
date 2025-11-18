@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Loader2, RefreshCw } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const RENEWAL_STATUSES = ['Auto-Renew', 'Manual Review', 'Pending', 'Cancelled'];
@@ -32,7 +34,7 @@ const RenewContractForm = ({ onClose, onContractRenewed }) => {
         const fetchContracts = async () => {
             try {
                 // Fetch only contracts that are not cancelled or expired (for renewal)
-                const res = await axios.get(`/api/contracts`, {
+                const res = await axios.get(`${API_BASE_URL}/api/contracts`, {
                     headers: { 'x-auth-token': token }
                 });
                 setContracts(res.data.filter(c => c.renewalStatus !== 'Cancelled' && new Date(c.end_date) >= new Date()));
@@ -99,7 +101,7 @@ const RenewContractForm = ({ onClose, onContractRenewed }) => {
             };
             
             // Send the update request
-            const res = await axios.put(`/api/contracts/${selectedContractId}`, payload, {
+            const res = await axios.put(`${API_BASE_URL}/api/contracts/${selectedContractId}`, payload, {
                 headers: { 'x-auth-token': token }
             });
 

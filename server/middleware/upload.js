@@ -16,18 +16,29 @@ const storage = multer.diskStorage({
 });
 
 // 2. Sirf image files ko allow karein
+// 👇 IS 'fileFilter' KO REPLACE KAREIN 👇
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/jpg') {
-        cb(null, true);
+    // Allowed file types: Images + PDF + Word Docs
+    const allowedTypes = [
+        'image/jpeg', 
+        'image/png', 
+        'image/jpg', 
+        'application/pdf', // 👈 PDF ke liye zaroori
+        'application/msword', // .doc
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true); // Accept file
     } else {
-        cb(new Error('Only .jpeg, .png, or .jpg files are allowed!'), false);
+        cb(new Error('Invalid file type. Only JPEG, PNG, JPG, PDF, DOC, and DOCX are allowed!'), false); // Reject file
     }
 };
 
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 1024 * 1024 * 5 // 5MB limit
+        fileSize: 1024 * 1024 * 10 // 5MB limit
     },
     fileFilter: fileFilter
 });

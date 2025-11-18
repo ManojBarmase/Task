@@ -4,45 +4,8 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Contract = require('../models/Contract');
+const upload = require('../middleware/upload');
 const Vendor = require('../models/Vendor'); // Vendor model is needed to link contracts
-
-// @route   POST api/contracts
-// @desc    Add new contract
-// @access  Private
-router.post('/', auth, async (req, res) => {
-    const { vendorId, contractTitle, start_date, end_date, contractValue, renewalStatus, termsLink } = req.body;
-    
-    try {
-        // Validation
-        if (!vendorId || !contractTitle || !start_date || !end_date || !contractValue) {
-             return res.status(400).json({ msg: 'Please enter all required contract fields.' });
-        }
-        
-        // Check if Vendor exists
-        const vendor = await Vendor.findById(vendorId);
-        if (!vendor) {
-            return res.status(404).json({ msg: 'Vendor not found.' });
-        }
-
-        const newContract = new Contract({
-            vendor: vendorId, // Use vendorId to link
-            contractTitle,
-            start_date,
-            end_date,
-            contractValue,
-            renewalStatus,
-            termsLink,
-            addedBy: req.user.id
-        });
-
-        const contract = await newContract.save();
-        res.json(contract);
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
 
 
 // @route   GET api/contracts
@@ -82,6 +45,62 @@ router.get('/:id', auth, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+
+
+// @route   POST api/contracts
+// @desc    Add new contract
+// @access  Private
+router.post('/', [auth, upload.single('document')], async (req, res) => {   
+    try {
+        // Agar req.body undefined hai, toh Multer nahi chala
+        if (!req.body) {
+            return res.status(400).json({ msg: 'No data received. Ensure Multer is working.' });
+        }
+         const { vendorId, contractTitle, start_date, end_date, contractValue, renewalStatus, termsLink, paymentFrequency, contactPerson } = req.body;
+        // Validation
+        if (!vendorId || !contractTitle || !start_date || !end_date || !contractValue) {
+             return res.status(400).json({ msg: 'Please enter all required contract fields.' });
+        }
+        
+        // Check if Vendor exists
+        const vendor = await Vendor.findById(vendorId);
+        if (!vendor) {
+            return res.status(404).json({ msg: 'Vendor not found.' });
+        }
+
+        const contractData = new Contract({
+            vendor: vendorId, // Use vendorId to link
+            contractTitle,
+            start_date,
+            end_date,
+            contractValue,
+            renewalStatus,
+            termsLink,
+            addedBy: req.user.id,
+            paymentFrequency,
+            contactPerson
+        });
+  
+        // 👈 Saving File Path
+       if (req.file) {
+            // Purana Code: contractData.documentPath = req.file.path; 
+            
+            // Naya Code: Clean relative path banayein
+            // Yeh 'uploads/filename.pdf' save karega jo browser samajh sakta hai
+            contractData.documentPath = `uploads/${req.file.filename}`; 
+        }
+
+        const newContract = new Contract(contractData);
+        const contract = await newContract.save();
+        res.json(contract);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 
 // @route   PUT api/contracts/:id
 // @desc    Update a contract (for renewal)

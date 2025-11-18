@@ -30,6 +30,12 @@ const ContractSchema = new mongoose.Schema({
         enum: ['Auto-Renew', 'Manual Review', 'Pending', 'Cancelled'],
         default: 'Pending'
     },
+    paymentFrequency: { type: String, default: 'Monthly' },
+
+    // Contract Specific Contact (Overrrides Vendor Contact)
+    contactPerson: { type: String, trim: true },
+    // File Path
+    documentPath: { type: String },
     lastRenewed: {
         type: Date,
         default: Date.now
@@ -45,7 +51,8 @@ const ContractSchema = new mongoose.Schema({
     dateAdded: {
         type: Date,
         default: Date.now
-    }
+    },
+    created_at: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('Contract', ContractSchema);

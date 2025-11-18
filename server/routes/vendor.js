@@ -41,78 +41,115 @@ const upload = multer({
 // @route   POST api/vendors
 // @desc    Add new vendor
 // @access  Private
-router.post('/', auth,upload.single('document'), async (req, res) => {
-    const { vendorName, productTool, category, 
-        contactPerson, contactEmail, phoneNumber, 
-        annualSpend, registeredId, 
-        billingCountry, billingAddress, billingCity, billingZip,
-       companyCountry, companyAddress, companyCity, companyZip,website, notes } = req.body;
+// router.post('/', auth,upload.single('document'), async (req, res) => {
+//     const { vendorName, productTool, category, 
+//         contactPerson, contactEmail, phoneNumber, 
+//         annualSpend, registeredId, 
+//         billingCountry, billingAddress, billingCity, billingZip,
+//        companyCountry, companyAddress, companyCity, companyZip,website, notes } = req.body;
     
-    try {
-        // Simple check for required fields
-        if (!vendorName || !productTool || !contactEmail) {
-             return res.status(400).json({ msg: 'Please enter all required fields.' });
-        }
+//     try {
+//         // Simple check for required fields
+//         if (!vendorName || !productTool || !contactEmail) {
+//              return res.status(400).json({ msg: 'Please enter all required fields.' });
+//         }
        
-        // 1. Address Objects को व्यवस्थित करें
-        const newBillingAddress = {
-            country: billingCountry,
-            address: billingAddress,
-            city: billingCity,
-            zip: billingZip
-        };
+//         // 1. Address Objects को व्यवस्थित करें
+//         const newBillingAddress = {
+//             country: billingCountry,
+//             address: billingAddress,
+//             city: billingCity,
+//             zip: billingZip
+//         };
 
-        const newCompanyAddress = {
-            country: companyCountry,
-            address: companyAddress,
-            city: companyCity,
-            zip: companyZip
-        };
+//         const newCompanyAddress = {
+//             country: companyCountry,
+//             address: companyAddress,
+//             city: companyCity,
+//             zip: companyZip
+//         };
 
-        // 2. फ़ाइल पाथ प्राप्त करें
-        const documentPath = req.file ? req.file.path : null;
+//         // 2. फ़ाइल पाथ प्राप्त करें
+//         const documentPath = req.file ? req.file.path : null;
 
-        // 3. नया Vendor ऑब्जेक्ट बनाएं
-        const newVendor = new Vendor({
-           vendorName,
-            productTool,
-            category,
-            contactPerson, // 👈️ नया फ़ील्ड
-            contactEmail,
-            phoneNumber,   // 👈️ नया फ़ील्ड
-            annualSpend,   // अब यह `initialSpend` के बजाय `annualSpend` के रूप में आएगा
-            billingAddress: newBillingAddress, // नया
-            companyAddress: newCompanyAddress, // नया
-            // 👇️ NEW FIELD: documentPath
-            documentPath: documentPath,
-            addedBy: req.user.id, // auth middleware से user ID
-            website,       // 👈️ नया फ़ील्ड
-            notes,         // 👈️ नया फ़ील्ड
-            addedBy: req.user.id
-        });
-        // 4. डेटाबेस में सेव करें
+//         // 3. नया Vendor ऑब्जेक्ट बनाएं
+//         const newVendor = new Vendor({
+//            vendorName,
+//             productTool,
+//             category,
+//             contactPerson, // 👈️ नया फ़ील्ड
+//             contactEmail,
+//             phoneNumber,   // 👈️ नया फ़ील्ड
+//             annualSpend,   // अब यह `initialSpend` के बजाय `annualSpend` के रूप में आएगा
+//             billingAddress: newBillingAddress, // नया
+//             companyAddress: newCompanyAddress, // नया
+//             // 👇️ NEW FIELD: documentPath
+//             documentPath: documentPath,
+//             addedBy: req.user.id, // auth middleware से user ID
+//             website,       // 👈️ नया फ़ील्ड
+//             notes,         // 👈️ नया फ़ील्ड
+//             addedBy: req.user.id
+//         });
+//         // 4. डेटाबेस में सेव करें
+//         const vendor = await newVendor.save();
+//         // res.json(vendor);
+//         res.status(201).json(vendor);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         // Multer error handling
+//         if (err instanceof multer.MulterError) {
+//              return res.status(400).json({ msg: `Multer Error: ${err.message}` });
+//         }
+//         if (err.message === 'Unsupported file type!') {
+//             return res.status(400).json({ msg: 'File type not supported. Please upload a PDF, DOC, or image.' });
+//         }
+//        // Duplicate vendor name/email error handling (अधिक सटीक)
+//         if (err.code === 11000) {
+//             let field = err.message.includes('vendorName') ? 'Vendor Name' : 'Contact Email';
+//             return res.status(400).json({ msg: `${field} already exists.` });
+//         }
+//         res.status(500).send('Server error');
+//     }
+// });
+// @route   POST api/vendors
+// @desc    Add a new vendor
+router.post('/', [auth, upload.single('document')], async (req, res) => {
+    try {
+        // 1. req.body ki copy banayein
+        let vendorData = { ...req.body };
+
+        // 2. 🛠️ JSON STRING PARSING (Yeh "Cast to string" error fix karega)
+        // Agar address/contact string format mein aaye hain, toh unhein wapas Object banayein
+        if (typeof vendorData.billingAddress === 'string') {
+            vendorData.billingAddress = JSON.parse(vendorData.billingAddress);
+        }
+        if (typeof vendorData.companyAddress === 'string') {
+            vendorData.companyAddress = JSON.parse(vendorData.companyAddress);
+        }
+        if (typeof vendorData.primaryContact === 'string') {
+            vendorData.primaryContact = JSON.parse(vendorData.primaryContact);
+        }
+
+        // 3. Document path set karein (agar file upload hui hai)
+        if (req.file) {
+            vendorData.documentPath = req.file.path;
+        }
+
+        // 4. Added By User ID set karein
+        vendorData.addedBy = req.user.id;
+
+        // 5. Vendor Save Karein
+        const newVendor = new Vendor(vendorData);
         const vendor = await newVendor.save();
-        // res.json(vendor);
-        res.status(201).json(vendor);
+
+        res.json(vendor);
 
     } catch (err) {
-        console.error(err.message);
-        // Multer error handling
-        if (err instanceof multer.MulterError) {
-             return res.status(400).json({ msg: `Multer Error: ${err.message}` });
-        }
-        if (err.message === 'Unsupported file type!') {
-            return res.status(400).json({ msg: 'File type not supported. Please upload a PDF, DOC, or image.' });
-        }
-       // Duplicate vendor name/email error handling (अधिक सटीक)
-        if (err.code === 11000) {
-            let field = err.message.includes('vendorName') ? 'Vendor Name' : 'Contact Email';
-            return res.status(400).json({ msg: `${field} already exists.` });
-        }
-        res.status(500).send('Server error');
+        console.error("Server Error:", err.message);
+        res.status(500).send('Server Error');
     }
 });
-
 
 // @route   GET api/vendors
 // @desc    Get all vendors

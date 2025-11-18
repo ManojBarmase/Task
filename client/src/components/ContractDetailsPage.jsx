@@ -1,3 +1,4 @@
+// client/src/components/ContractDetailsPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
@@ -14,6 +15,20 @@ const formatCurrency = (amount) => {
         minimumFractionDigits: 0
     }).format(amount);
 };
+
+// Helper to build full URL
+const getDocumentUrl = (path) => {
+    if (!path) return null;
+    
+    // Windows style path (\) ko Web style (/) mein badlein
+    const cleanPath = path.replace(/\\/g, '/');
+    
+    // Agar path pehle se 'http' se shuru hota hai toh waisa hi return karein
+    if (cleanPath.startsWith('http')) return cleanPath;
+
+    return `${API_BASE_URL}/${cleanPath}`;
+};
+
 
 const ContractDetailsPage = () => {
     const [contract, setContract] = useState(null);
@@ -51,6 +66,48 @@ const ContractDetailsPage = () => {
     if (!contract) return <div className="p-8 text-center text-gray-500">No contract data found.</div>;
 
     const daysLeft = Math.ceil((new Date(contract.end_date) - new Date()) / (1000 * 60 * 60 * 24));
+
+    // Function to check extension and render
+    const renderDocumentPreview = (path) => {
+        const url = getDocumentUrl(path);
+        const extension = path.split('.').pop().toLowerCase();
+
+        if (extension === 'pdf') {
+            // PDF ke liye iframe use karein (Screenshot jaisa view)
+            return (
+                <iframe 
+                    src={url} 
+                    title="Contract Document"
+                    className="w-full h-full border-none"
+                />
+            );
+        } else if (['jpg', 'jpeg', 'png'].includes(extension)) {
+            // Image ke liye img tag
+            return (
+                <img 
+                    src={url} 
+                    alt="Contract" 
+                    className="w-full h-full object-contain" 
+                />
+            );
+        } else {
+            // Word/Excel files browser mein direct embed nahi hoti, unke liye fallback
+            return (
+                <div className="flex flex-col items-center justify-center h-full">
+                    <FileText className="w-16 h-16 text-gray-400 mb-4" />
+                    <p className="text-gray-600 mb-2">Preview not available for this file type.</p>
+                    <a 
+                        href={url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sky-600 hover:underline font-medium"
+                    >
+                        Click here to view/download
+                    </a>
+                </div>
+            );
+        }
+    };
 
     // Screenshot (108, 109, 110) ke hisab se JSX
     return (
@@ -105,25 +162,35 @@ const ContractDetailsPage = () => {
                     </div>
 
                     {/* Contract Document (Screenshot 109, 110) */}
+                    {/* Contract Document (Screenshot 115 Style) */}
                     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-800">Contract Document</h3>
-                            <button className="flex items-center text-sm text-sky-600 font-medium hover:underline">
-                                <Download className="w-4 h-4 mr-1" />
-                                Download
-                            </button>
+                            
+                            {contract.documentPath && (
+                                <a 
+                                    href={getDocumentUrl(contract.documentPath)} 
+                                    download // Download attribute force karega download ko
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-center px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 font-medium transition-colors"
+                                >
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Download
+                                </a>
+                            )}
                         </div>
-                        <div className="border border-gray-300 rounded-lg p-4 h-96 overflow-y-auto">
-                            {/* Yahaan aap PDF viewer laga sakte hain, abhi ke liye placeholder: */}
-                            <p className="font-mono text-sm">
-                                SERVICE AGREEMENT <br />
-                                Contract No: {contract._id.slice(-6)} <br />
-                                Parties: <br />
-                                Provider: {contract.vendor?.vendorName} <br />
-                                Client: ProcureIQ Corporation <br />
-                                ... (File preview yahaan aayega) ...
-                            </p>
-                            {/* <img src="/path/to/contract-image.png" alt="Contract Preview" /> */}
+                        
+                        {/* Document Viewer Container */}
+                        <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 h-[600px]"> {/* h-[600px] se height badi hogi */}
+                             {contract.documentPath ? (
+                                renderDocumentPreview(contract.documentPath)
+                             ) : (
+                                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                                     <FileText className="w-12 h-12 mb-2 text-gray-400" />
+                                     <p>No document uploaded for this contract.</p>
+                                 </div>
+                             )}
                         </div>
                     </div>
                 </div>
@@ -143,7 +210,7 @@ const ContractDetailsPage = () => {
                     <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-200">
                         <h3 className="text-base font-semibold text-gray-800 mb-4">Vendor Contact</h3>
                         <div className="space-y-3">
-                            <ContactItem icon={<User />} label="Contact Person" value={contract.vendor?.contactName || 'Account Manager'} />
+                            <ContactItem icon={<User />} label="Contact Person" value={contract.contactPerson || contract.vendor?.contactPerson?.name || contract.vendor?.contactPerson || 'Account Manager'} />
                             <ContactItem icon={<Mail />} label="Email" value={contract.vendor?.contactEmail || 'N/A'} />
                             <ContactItem icon={<Phone />} label="Phone" value={contract.vendor?.phone || 'N/A'} />
                         </div>

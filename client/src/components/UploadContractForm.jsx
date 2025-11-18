@@ -19,6 +19,10 @@ const UploadContractForm = ({ onClose, onContractAdded }) => {
         contactPerson: '',           // UI field, not in model
         uploadedFileName: ''         // UI field, for file name display
     });
+
+    // 👇 File Object Store karne ke liye state
+    const [selectedFile, setSelectedFile] = useState(null);
+
     const [vendors, setVendors] = useState([]); // To store the list of vendors
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -59,6 +63,7 @@ const UploadContractForm = ({ onClose, onContractAdded }) => {
     // Handle File Input Change (for UI display only)
     const handleFileChange = (e) => {
         const file = e.target.files[0];
+        setSelectedFile(file);
         setFormData(prev => ({ 
             ...prev, 
             uploadedFileName: file ? file.name : ''
@@ -75,16 +80,31 @@ const UploadContractForm = ({ onClose, onContractAdded }) => {
 
         try {
             // Frontend UI field mapping to Backend Model fields:
-            const payload = {
-                vendorId: formData.vendorId, // Backend uses 'vendor' (ID)
-                contractTitle: formData.contractTitle, 
-                start_date: formData.start_date,
-                end_date: formData.end_date,
-                contractValue: parseFloat(formData.contractValue) || 0,
-                renewalStatus: formData.renewalStatus, // Default is Pending
-            };
+            // const payload = {
+            //     vendorId: formData.vendorId, // Backend uses 'vendor' (ID)
+            //     contractTitle: formData.contractTitle, 
+            //     start_date: formData.start_date,
+            //     end_date: formData.end_date,
+            //     contractValue: parseFloat(formData.contractValue) || 0,
+            //     renewalStatus: formData.renewalStatus, // Default is Pending
+            // };
 
-            const res = await axios.post(`${API_BASE_URL}/api/contracts`, payload, {
+          // 👇 Use FormData instead of JSON
+            const data = new FormData();
+            data.append('vendorId', formData.vendorId);
+            data.append('contractTitle', formData.contractTitle);
+            data.append('start_date', formData.start_date);
+            data.append('end_date', formData.end_date);
+            data.append('contractValue', formData.contractValue);
+            data.append('renewalStatus', formData.renewalStatus);
+            data.append('paymentFrequency', formData.paymentFrequency);
+            data.append('contactPerson', formData.contactPerson); // 👈 Sending Contact Person
+
+            if (selectedFile) {
+                data.append('document', selectedFile); // 👈 Sending File
+            }
+
+            const res = await axios.post(`${API_BASE_URL}/api/contracts`, data, {
                 headers: { 'x-auth-token': token }
             });
 

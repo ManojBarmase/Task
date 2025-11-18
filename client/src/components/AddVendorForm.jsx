@@ -1,47 +1,91 @@
 // client/src/components/AddVendorForm.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+// ISKE NEECHE YEH LINE ADD KAREIN:
+import { Country, State, City } from 'country-state-city';
 import axios from 'axios';
 import { X, Loader2 , Upload} from 'lucide-react';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-const countryList = [
-    'United States', 
-    'Canada', 
-    'India', 
-    'United Kingdom',
-    'Germany',
-    'Australia',
-    'Brazil',
-    'Japan',
-    'Other'
-];
 
 const AddVendorForm = ({ onClose, onVendorAdded }) => {
-    const [formData, setFormData] = useState({
-        vendorName: '',
-        productTool: '',
-        category: 'Other', // Default category
-        contactPerson: '', // Not in model yet, but in UI, will ignore for backend
-        contactEmail: '',
-        phoneNumber: '',   // Not in model yet, but in UI, will ignore for backend
-        initialSpend: 0,   // Maps to annualSpend
-        website: '',       // Not in model yet, but in UI, will ignore for backend
-        notes: ''          // Not in model yet, but in UI, will ignore for backend
-        ,
-        // 👇️ NEW FIELDS ADDED HERE
-        registeredId: '', // Company Registered ID
-        billingCountry: 'India',
-        billingAddress: '',
-        billingCity: '',
-        billingZip: '',
-        companyCountry: 'India',
-        companyAddress: '',
-        companyCity: '',
-        companyZip: '',
-    });
+    // IS 'formData' STATE KO REPLACE KAREIN:
+
+        // IS NAYE CODE SE:
+        const [formData, setFormData] = useState({
+            vendorName: '',
+            productTool: '',
+            category: 'Other',
+            contactPerson: '',
+            contactEmail: '',
+            phoneNumber: '',
+            annualSpend: 0, // 'initialSpend' ko rename kiya
+            website: '',
+            notes: '',
+            registeredId: '',
+            
+            // Naya Nested Address Structure
+            billingAddress: {
+                country: '',
+                state: '',
+                city: '',
+                address: '', // 'Address Line' ke liye
+                zip: ''      // 'Zip/Postal Code' ke liye
+            },
+            companyAddress: {
+                country: '',
+                state: '',
+                city: '',
+                address: '',
+                zip: ''
+            },
+        });
+
+         // YEH NAYA CODE ADD KAREIN
+    // YEH NAYA CODE ADD KAREIN
+    const [countries, setCountries] = useState([]);
+    const [billingStates, setBillingStates] = useState([]);
+    const [billingCities, setBillingCities] = useState([]);
+    const [companyStates, setCompanyStates] = useState([]);
+    const [companyCities, setCompanyCities] = useState([]);
+
+    // YEH POORA NAYA CODE ADD KAREIN
+
+        // 1. Countries ko load karein (Sirf ek baar)
+        useEffect(() => {
+            setCountries(Country.getAllCountries());
+        }, []);
+
+        // 2. Billing: Jab Country badle, States load karein
+        useEffect(() => {
+            const countryIsoCode = formData.billingAddress.country;
+            setBillingStates(State.getStatesOfCountry(countryIsoCode));
+            setBillingCities([]); // States badalne par cities reset karein
+        }, [formData.billingAddress.country]);
+
+        // 3. Billing: Jab State badle, Cities load karein
+        useEffect(() => {
+            const countryIsoCode = formData.billingAddress.country;
+            const stateIsoCode = formData.billingAddress.state;
+            setBillingCities(City.getCitiesOfState(countryIsoCode, stateIsoCode));
+        }, [formData.billingAddress.country, formData.billingAddress.state]);
+
+        // 4. Company: Jab Country badle, States load karein
+        useEffect(() => {
+            const countryIsoCode = formData.companyAddress.country;
+            setCompanyStates(State.getStatesOfCountry(countryIsoCode));
+            setCompanyCities([]);
+        }, [formData.companyAddress.country]);
+
+        // 5. Company: Jab State badle, Cities load karein
+        useEffect(() => {
+            const countryIsoCode = formData.companyAddress.country;
+            const stateIsoCode = formData.companyAddress.state;
+            setCompanyCities(City.getCitiesOfState(countryIsoCode, stateIsoCode));
+        }, [formData.companyAddress.country, formData.companyAddress.state]);
+
       // 👇️ NEW STATE for file upload
     const [uploadedFile, setUploadedFile] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -53,10 +97,39 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
         'Cloud Services', 'Hardware', 'CRM', 'Development', 'Design Software'
     ];
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
+    // PURANE 'handleChange' FUNCTION KO IS NAAYE CODE SE REPLACE KAREIN
+
+        const handleChange = (e) => {
+            const { name, value } = e.target;
+
+            // Check karein ki yeh address field hai ya nahi
+            if (name.includes('Address.')) {
+                // e.g., name="billingAddress.country"
+                const [addressType, fieldName] = name.split('.'); // ["billingAddress", "country"]
+
+                setFormData(prev => {
+                    const updatedAddress = { ...prev[addressType], [fieldName]: value };
+
+                    // Reset logic: Agar country badli hai, toh state aur city reset karo
+                    if (fieldName === 'country') {
+                        updatedAddress.state = '';
+                        updatedAddress.city = '';
+                    }
+                    // Agar state badla hai, toh city reset karo
+                    if (fieldName === 'state') {
+                        updatedAddress.city = '';
+                    }
+
+                    return {
+                        ...prev,
+                        [addressType]: updatedAddress
+                    };
+                });
+            } else {
+                // Normal (top-level) field
+                setFormData(prev => ({ ...prev, [name]: value }));
+            }
+        };
 
      // 👇️ FILE CHANGE HANDLER
     const handleFileChange = (e) => {
@@ -64,83 +137,95 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
         setUploadedFile(file);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccess(false);
+      // PURANE 'handleSubmit' FUNCTION KO IS NAYE CODE SE REPLACE KAREIN
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setError('Authorization token not found. Please log in again.');
-            setLoading(false);
-            return;
-        }
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setLoading(true);
+            setError(null);
+            setSuccess(false);
 
-        try {
-            // Backend Model fields: vendorName, productTool, category, contactEmail, annualSpend, addedBy
-            // We will only send these fields to backend, others are UI-only for now.
-            // const payload = {
-            //     vendorName: formData.vendorName,
-            //     productTool: formData.productTool,
-            //     category: formData.category,
-            //     contactPerson: formData.contactPerson, // 👈️ नया फ़ील्ड
-            //     contactEmail: formData.contactEmail,
-            //     phoneNumber: formData.phoneNumber,     // 👈️ नया फ़ील्ड
-            //     annualSpend: parseFloat(formData.initialSpend) || 0, // renamed initialSpend to annualSpend
-            //     registeredId: formData.registeredId, 
-            //     billingCountry: formData.billingCountry,
-            //     billingAddress: formData.billingAddress,
-            //     billingCity: formData.billingCity,
-            //     billingZip: formData.billingZip,
-            //     companyCountry: formData.companyCountry,
-            //     companyAddress: formData.companyAddress,
-            //     companyCity: formData.companyCity,
-            //     companyZip: formData.companyZip,  website: formData.website,             // 👈️ नया फ़ील्ड
-            //     notes: formData.notes                  // 👈️ नया फ़ීल्ड
-            // };
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('Authorization token not found.');
+                setLoading(false);
+                return;
+            }
 
-             const data = new FormData();
-            
-            // 1. Append Text Data
-            for (const key in formData) {
-                // Ensure number values (like initialSpend) are converted correctly
-                if (key === 'initialSpend') {
-                    data.append('annualSpend', parseFloat(formData.initialSpend) || 0);
-                } else {
-                    data.append(key, formData[key]);
+            try {
+                const data = new FormData();
+                // 1. Simple Fields
+                    data.append('vendorName', formData.vendorName);
+                    data.append('productTool', formData.productTool);
+                    data.append('category', formData.category);
+                    data.append('annualSpend', parseFloat(formData.annualSpend) || 0);
+                    data.append('website', formData.website);
+                    data.append('notes', formData.notes);
+                    data.append('registeredId', formData.registeredId);
+                    
+                    // 2. MAPPING FIELDS (Form -> Schema)
+                    // Form mein 'contactEmail' hai, Schema mein 'companyEmail' hai
+                    data.append('contactEmail', formData.contactEmail); 
+                    data.append('phoneNumber', formData.phoneNumber);
+                    data.append('companyEmail', formData.contactEmail);
+
+                    // 3. NESTED OBJECTS (JSON.stringify karein)
+                    // Isse backend parsing error khatam ho jayega
+                    
+                    // Billing Address
+                    data.append('billingAddress', JSON.stringify({
+                        country: formData.billingAddress.country ? Country.getCountryByCode(formData.billingAddress.country).name : '',
+                        state: formData.billingAddress.state ? State.getStateByCodeAndCountry(formData.billingAddress.state, formData.billingAddress.country).name : '',
+                        city: formData.billingAddress.city,
+                        address: formData.billingAddress.address,
+                        zip: formData.billingAddress.zip
+                    }));
+
+                    // Company Address
+                    data.append('companyAddress', JSON.stringify({
+                        country: formData.companyAddress.country ? Country.getCountryByCode(formData.companyAddress.country).name : '',
+                        state: formData.companyAddress.state ? State.getStateByCodeAndCountry(formData.companyAddress.state, formData.companyAddress.country).name : '',
+                        city: formData.companyAddress.city,
+                        address: formData.companyAddress.address,
+                        zip: formData.companyAddress.zip
+                    }));
+
+                    // Primary Contact (Create Object)
+                    data.append('primaryContact', JSON.stringify({
+                        name: formData.contactPerson,
+                        email: formData.contactEmail,
+                        phone: formData.phoneNumber
+                    }));
+                // 4. Append File Data
+                if (uploadedFile) {
+                    data.append('document', uploadedFile);
                 }
-            }
-            
-            // 2. Append File Data (backend-এ এটি 'document' হিসাবে পরিচিত হবে)
-            if (uploadedFile) {
-                data.append('document', uploadedFile);
-            }
 
-            const res = await axios.post(`${API_BASE_URL}/api/vendors`, data, {
-                headers: { 'x-auth-token': token }
-            });
+                const res = await axios.post(`${API_BASE_URL}/api/vendors`, data, {
+                    headers: { 'x-auth-token': token }
+                });
 
-            setSuccess(true);
-            setFormData({ // Clear form fields
-                vendorName: '', productTool: '', category: 'Other', 
-                contactPerson: '', contactEmail: '', phoneNumber: '', 
-                initialSpend: 0, website: '', notes: '',
-                 registeredId: '', billingCountry: '', billingAddress: '', 
-                billingCity: '', billingZip: '', companyCountry: '', 
-                companyAddress: '', companyCity: '', companyZip: '',
-            });
-             setUploadedFile(null);
-            onVendorAdded(res.data); // Notify parent component of new vendor
-            // onClose(); // Optionally close form after success
-            
-        } catch (err) {
+                setSuccess(true);
+                // Form reset logic (ab naye state structure ke saath)
+                setFormData({
+                    vendorName: '', productTool: '', category: 'Other', contactPerson: '',
+                    contactEmail: '', phoneNumber: '', annualSpend: 0, website: '',
+                    notes: '', registeredId: '',
+                    billingAddress: { country: '', state: '', city: '', address: '', zip: '' },
+                    companyAddress: { country: '', state: '', city: '', address: '', zip: '' },
+                });
+                setUploadedFile(null);
+                onVendorAdded(res.data);
+                
+            }catch (err) {
             console.error("Add Vendor Error:", err.response || err);
-            setError(err.response?.data?.msg || 'Failed to add vendor. Please try again.');
+            // Error message dikhane ka behtar tareeka
+            const errorMsg = err.response?.data?.msg || err.response?.data?.message || 'Failed to add vendor.';
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
-    };
+     };
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -185,7 +270,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 type="text"
                                 id="vendorName"
                                 name="vendorName"
-                                value={formData.vendorName}
+                                value={formData.vendorName || ''}
                                 onChange={handleChange}
                                 placeholder="e.g., Google LLC, Microsoft Corp"
                                 required
@@ -202,7 +287,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 type="text"
                                 id="productTool"
                                 name="productTool"
-                                value={formData.productTool}
+                                value={formData.productTool || ''}
                                 onChange={handleChange}
                                 placeholder="e.g., Google Workspace, Slack"
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
@@ -217,7 +302,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                             <select
                                 id="category"
                                 name="category"
-                                value={formData.category}
+                                value={formData.category || ''}
                                 onChange={handleChange}
                                 required
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
@@ -237,7 +322,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 type="text"
                                 id="contactPerson"
                                 name="contactPerson"
-                                value={formData.contactPerson}
+                                value={formData.contactPerson || ''}
                                 onChange={handleChange}
                                 placeholder="Enter contact name"
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
@@ -253,7 +338,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 type="email"
                                 id="contactEmail"
                                 name="contactEmail"
-                                value={formData.contactEmail}
+                                value={formData.contactEmail || ''}
                                 onChange={handleChange}
                                 placeholder="contact@vendor.com"
                                 required
@@ -270,7 +355,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 type="text"
                                 id="phoneNumber"
                                 name="phoneNumber"
-                                value={formData.phoneNumber}
+                                value={formData.phoneNumber || ''}
                                 onChange={handleChange}
                                 placeholder="+1 (555) 123-4567"
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
@@ -286,7 +371,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 type="number"
                                 id="initialSpend"
                                 name="initialSpend"
-                                value={formData.initialSpend}
+                                value={formData.initialSpend || ''}
                                 onChange={handleChange}
                                 min="0"
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
@@ -303,7 +388,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 type="text"
                                 id="registeredId"
                                 name="registeredId"
-                                value={formData.registeredId}
+                                value={formData.registeredId || ''}
                                 onChange={handleChange}
                                 placeholder="e.g., CIN or Tax ID"
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
@@ -346,53 +431,68 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                         {/* ------------------------------------------------------------- */}
 
                         {/* 👇️ NEW SECTION: Billing Address */}
+                         {/* 👇️ NEW SECTION: Billing Address (REPLACE KAREIN) */}
                         <div className="col-span-2 pt-4 border-t border-gray-200">
                             <h4 className="text-md font-semibold text-gray-800 mb-3">Billing Address</h4>
                             <div className="grid grid-cols-2 gap-x-5 gap-y-4">
                                 
                                 {/* Billing Country */}
-                               {/* Billing Country (SELECT DROPDOWN) */}
                                 <div>
-                                    <label htmlFor="billingCountry" className="block text-sm font-medium text-gray-700 mb-1">Country (देश)</label>
+                                    <label htmlFor="billingCountry" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
                                     <select
                                         id="billingCountry"
-                                        name="billingCountry"
-                                        value={formData.billingCountry}
+                                        name="billingAddress.country" // 👈 Naam badla hai
+                                        value={formData.billingAddress.country || ''} // 👈 Value badli hai
                                         onChange={handleChange}
                                         className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
                                     >
-                                        {countryList.map(country => (
-                                            <option key={country} value={country}>{country}</option>
+                                        <option value="">Select Country</option>
+                                        {countries.map(country => (
+                                            <option key={country.isoCode} value={country.isoCode || ''}>
+                                                {country.name}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
 
-                                {/* Billing Address Line */}
-                                <div className="col-span-2">
-                                    <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">Address Line</label>
-                                    <input
-                                        type="text"
-                                        id="billingAddress"
-                                        name="billingAddress"
-                                        value={formData.billingAddress}
+                                {/* Billing State (Naya) */}
+                                <div>
+                                    <label htmlFor="billingState" className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                    <select
+                                        id="billingState"
+                                        name="billingAddress.state" // 👈 Naya
+                                        value={formData.billingAddress.state || ''} // 👈 Naya
                                         onChange={handleChange}
-                                        placeholder="Street address, P.O. Box, etc."
+                                        disabled={!billingStates.length} // Disable karein jab tak country select na ho
                                         className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
-                                    />
+                                    >
+                                        <option value="">Select State</option>
+                                        {billingStates.map(state => (
+                                            <option key={state.isoCode} value={state.isoCode || ''}>
+                                                {state.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 
                                 {/* Billing City */}
                                 <div>
                                     <label htmlFor="billingCity" className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         id="billingCity"
-                                        name="billingCity"
-                                        value={formData.billingCity}
+                                        name="billingAddress.city" // 👈 Naam badla hai
+                                        value={formData.billingAddress.city || ''} // 👈 Value badli hai
                                         onChange={handleChange}
-                                        placeholder="e.g., Mumbai"
+                                        disabled={!billingCities.length} // Disable karein jab tak state select na ho
                                         className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
-                                    />
+                                    >
+                                        <option value="">Select City</option>
+                                        {billingCities.map(city => (
+                                            <option key={city.name} value={city.name || ''}>
+                                                {city.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 {/* Billing Zip/Postal Code */}
@@ -401,65 +501,96 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                     <input
                                         type="text"
                                         id="billingZip"
-                                        name="billingZip"
-                                        value={formData.billingZip}
+                                        name="billingAddress.zip" // 👈 Naam badla hai
+                                        value={formData.billingAddress.zip || ''} // 👈 Value badli hai
                                         onChange={handleChange}
                                         placeholder="e.g., 400001"
                                         className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
                                     />
                                 </div>
-                            </div>
-                        </div>
-                        {/* ------------------------------------------------------------- */}
 
-
-                        {/* 👇️ NEW SECTION: Company Address */}
-                        <div className="col-span-2 pt-4 border-t border-gray-200">
-                            <h4 className="text-md font-semibold text-gray-800 mb-3">Company Address</h4>
-                            <div className="grid grid-cols-2 gap-x-5 gap-y-4">
-                                
-                                {/* Company Country */}
-                               <div>
-                                    <label htmlFor="companyCountry" className="block text-sm font-medium text-gray-700 mb-1">Country (देश)</label>
-                                    <select
-                                        id="companyCountry"
-                                        name="companyCountry"
-                                        value={formData.companyCountry}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
-                                    >
-                                        {countryList.map(country => (
-                                            <option key={country} value={country}>{country}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Company Address Line */}
+                                {/* Billing Address Line */}
                                 <div className="col-span-2">
-                                    <label htmlFor="companyAddress" className="block text-sm font-medium text-gray-700 mb-1">Address Line</label>
+                                    <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">Address Line</label>
                                     <input
                                         type="text"
-                                        id="companyAddress"
-                                        name="companyAddress"
-                                        value={formData.companyAddress}
+                                        id="billingAddress"
+                                        name="billingAddress.address" // 👈 Naam badla hai
+                                        value={formData.billingAddress.address || ''} // 👈 Value badli hai
                                         onChange={handleChange}
                                         placeholder="Street address, P.O. Box, etc."
                                         className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
                                     />
                                 </div>
                                 
+                            </div>
+                        </div>
+                        {/* ------------------------------------------------------------- */}
+
+
+                        {/* 👇️ NEW SECTION: Company Address */}
+                         {/* 👇️ NEW SECTION: Company Address (REPLACE KAREIN) */}
+                        <div className="col-span-2 pt-4 border-t border-gray-200">
+                            <h4 className="text-md font-semibold text-gray-800 mb-3">Company Address</h4>
+                            <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                                
+                                {/* Company Country */}
+                                <div>
+                                    <label htmlFor="companyCountry" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                    <select
+                                        id="companyCountry"
+                                        name="companyAddress.country" // 👈 Naam badla hai
+                                        value={formData.companyAddress.country || ''} // 👈 Value badli hai
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    >
+                                        <option value="">Select Country</option>
+                                        {countries.map(country => (
+                                            <option key={country.isoCode} value={country.isoCode || ''}>
+                                                {country.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Company State (Naya) */}
+                                <div>
+                                    <label htmlFor="companyState" className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                    <select
+                                        id="companyState"
+                                        name="companyAddress.state" // 👈 Naya
+                                        value={formData.companyAddress.state || ''} // 👈 Naya
+                                        onChange={handleChange}
+                                        disabled={!companyStates.length}
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    >
+                                        <option value="">Select State</option>
+                                        {companyStates.map(state => (
+                                            <option key={state.isoCode} value={state.isoCode || ''}>
+                                                {state.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                
                                 {/* Company City */}
                                 <div>
                                     <label htmlFor="companyCity" className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         id="companyCity"
-                                        name="companyCity"
-                                        value={formData.companyCity}
+                                        name="companyAddress.city" // 👈 Naam badla hai
+                                        value={formData.companyAddress.city || ''} // 👈 Value badli hai
                                         onChange={handleChange}
-                                        placeholder="e.g., Mumbai"
+                                        disabled={!companyCities.length}
                                         className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
-                                    />
+                                    >
+                                        <option value="">Select City</option>
+                                        {companyCities.map(city => (
+                                            <option key={city.name} value={city.name || ''}>
+                                                {city.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 {/* Company Zip/Postal Code */}
@@ -468,13 +599,28 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                     <input
                                         type="text"
                                         id="companyZip"
-                                        name="companyZip"
-                                        value={formData.companyZip}
+                                        name="companyAddress.zip" // 👈 Naam badla hai
+                                        value={formData.companyAddress.zip || ''} // 👈 Value badli hai
                                         onChange={handleChange}
                                         placeholder="e.g., 400001"
                                         className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
                                     />
                                 </div>
+
+                                {/* Company Address Line */}
+                                <div className="col-span-2">
+                                    <label htmlFor="companyAddress" className="block text-sm font-medium text-gray-700 mb-1">Address Line</label>
+                                    <input
+                                        type="text"
+                                        id="companyAddress"
+                                        name="companyAddress.address" // 👈 Naam badla hai
+                                        value={formData.companyAddress.address || ''} // 👈 Value badli hai
+                                        onChange={handleChange}
+                                        placeholder="Street address, P.O. Box, etc."
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
+                                    />
+                                </div>
+                                
                             </div>
                         </div>
                         {/* ------------------------------------------------------------- */}
@@ -488,7 +634,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                                 type="url"
                                 id="website"
                                 name="website"
-                                value={formData.website}
+                                value={formData.website || ''}
                                 onChange={handleChange}
                                 placeholder="https://vendor.com"
                                 className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-sky-500 focus:border-sky-500"
@@ -503,7 +649,7 @@ const AddVendorForm = ({ onClose, onVendorAdded }) => {
                             <textarea
                                 id="notes"
                                 name="notes"
-                                value={formData.notes}
+                                value={formData.notes || ''}
                                 onChange={handleChange}
                                 rows="3"
                                 placeholder="Additional information about the vendor or product/service..."
