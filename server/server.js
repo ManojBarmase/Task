@@ -88,7 +88,23 @@ app.get('/api/status', (req, res) => {
 
 // 4. Static Files and Catch-all Handler (For React App)
 // Render recommends placing the static middleware and catch-all handler AFTER all API routes.
-app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
+// app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
+
+// 👇👇 YEH HAI MAIN FIX (Static Files Setup) 👇👇
+
+// A. Client Build Path Define Karein
+// __dirname abhi 'server' folder mein hai, isliye humein '../client/dist' jana hai
+const clientBuildPath = path.join(__dirname, '../client/dist');
+
+// B. Static Files Serve Karein (CSS, JS, Images)
+app.use(express.static(clientBuildPath));
+
+// C. Catch-All Route (Sabse Last Mein)
+// Agar koi API route match nahi hua, aur koi static file nahi mili,
+// toh React ka index.html bhej do (SPA routing ke liye)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
 
 // // FIX: Reverting to simple '*' which is stable on Express 4.x
 // app.get('*', (req, res) => { 
