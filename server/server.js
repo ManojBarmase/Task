@@ -31,7 +31,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL, // Render URL या लोकल http://localhost:5173
   'http://localhost:5173',  // Local Vite Dev Server का default port
   'http://127.0.0.1:5173',
-  'http://localhost:5174'
+  'http://localhost:5174',
+  'https://task-pink-seven.vercel.app/'
 ];
 
 const corsOptions = {
@@ -75,9 +76,9 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/contracts', contractRoutes); 
 app.use('/api/analytics', analyticsRoutes);
 
-app.get('/', (req, res) => {
-    res.send('ProcureIQ Backend API is running...');
-});
+// app.get('/', (req, res) => {
+//     res.send('ProcureIQ Backend API is running...');
+// });
 
 app.get('/api/status', (req, res) => {
   res.json({
