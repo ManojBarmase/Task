@@ -6,33 +6,27 @@ const fs = require('fs');
 // __dirname = .../server/middleware
 // ..        = .../server
 // uploads   = .../server/uploads
-const uploadDir = path.resolve(__dirname, '..', 'uploads');
+// 1. DIRECT ROOT PATH (Sabse Safe Tareeka)
+// Yeh '/opt/render/project/src/uploads' banayega
+const uploadDir = path.join(process.cwd(), 'uploads'); 
 
-console.log("🔧 Middleware Init. Absolute Path:", uploadDir);
+console.log("🔧 Multer Configured for:", uploadDir);
 
-// 2. FOLDER CHECK & CREATE
+// 2. Folder Check & Create
 if (!fs.existsSync(uploadDir)) {
-    console.log("⚠️ Upload folder missing. Creating at:", uploadDir);
-    try {
-        fs.mkdirSync(uploadDir, { recursive: true });
-        console.log("✅ Folder Created!");
-    } catch (err) {
-        console.error("❌ Failed to create folder:", err);
-    }
+    console.log("⚠️ Directory missing. Creating at ROOT:", uploadDir);
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // 3. LOGGING: Confirm karein ki Multer ko kya path mil raha hai
-        console.log("📂 Multer Writing to:", uploadDir);
-        
-        // Absolute path pass karein
+        // Absolute Path pass karein
         cb(null, uploadDir); 
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const cleanName = file.originalname.replace(/\s+/g, '-');
-        cb(null, file.fieldname + '-' + uniqueSuffix + '-' + cleanName);
+        cb(null, 'doc-' + uniqueSuffix + '-' + cleanName);
     }
 });
 
