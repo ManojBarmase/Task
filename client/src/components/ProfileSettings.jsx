@@ -18,13 +18,28 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 // };
 
 // Helper: Image URL ko poora banata hai
+// 2. Image URL Helper (Windows path fix + Base URL)
 const getFullImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    // Check karein ki path pehle se hi full URL hai ya nahi
+
+    // Agar path mein pehle se http hai (e.g. Cloudinary url), toh wahi return karein
     if (imagePath.startsWith('http')) return imagePath;
-    // Server ke path ko jodein
-    return `${API_BASE_URL}/${imagePath.replace(/\\/g, '/')}`; // 'uploads/image.png'
-}
+
+    // Backslash ko Forward slash mein badlein
+    let cleanPath = imagePath.replace(/\\/g, '/');
+
+    // Agar path 'uploads/' se shuru nahi hota, toh laga dein
+    if (!cleanPath.startsWith('uploads/')) {
+        // Kabhi kabhi server poora path bhej deta hai, use clean karein
+        const parts = cleanPath.split('uploads/');
+        if (parts.length > 1) {
+            cleanPath = 'uploads/' + parts[1];
+        }
+    }
+
+    // Final URL banayein
+    return `${API_BASE_URL}/${cleanPath}`;
+};
 
 
 // 👇 YEH NAYI LIST ADD KAREIN

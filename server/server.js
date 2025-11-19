@@ -60,9 +60,10 @@ app.use(express.json());
 // Yeh check karega ki 'uploads' folder hai ya nahi. Agar nahi hai, toh bana dega.
 // 1. Wahi same Absolute Path define karein
 // 1. Same Path Logic Use Karein
-// 
-// 1. Same Root Path
-const uploadDir = path.join(process.cwd(), 'uploads');
+// __dirname = server
+// ..        = Root
+// Result    = Root/uploads
+const uploadDir = path.join(__dirname, '../uploads');
 
 // 2. Ensure Folder Exists (Double Safety)
 if (!fs.existsSync(uploadDir)) {

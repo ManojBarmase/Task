@@ -112,11 +112,18 @@ const VendorsPage = () => {
     const avgRating = activeCount > 0 ? (vendors.reduce((sum, v) => sum + v.rating, 0) / activeCount) : 0;
     
     // Filtering Logic (Updated to include Category and Status)
+     // Filtering Logic (Updated with Safe Checks)
     const filteredVendors = vendors.filter(vendor => {
+        // 🛠️ FIX: Agar field undefined hai toh empty string '' maan lo
+        const vName = vendor.vendorName || '';
+        const vTool = vendor.productTool || '';
+        const vEmail = vendor.contactEmail || '';
+        const term = searchTerm.toLowerCase();
+
         const matchesSearch = 
-            vendor.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendor.productTool.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendor.contactEmail.toLowerCase().includes(searchTerm.toLowerCase());
+            vName.toLowerCase().includes(term) ||
+            vTool.toLowerCase().includes(term) ||
+            vEmail.toLowerCase().includes(term);
             
         const matchesCategory = 
             selectedCategory === 'All Categories' || 

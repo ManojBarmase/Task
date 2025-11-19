@@ -2,25 +2,22 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// 1. ABSOLUTE PATH GENERATE KAREIN
-// __dirname = .../server/middleware
-// ..        = .../server
-// uploads   = .../server/uploads
-// 1. DIRECT ROOT PATH (Sabse Safe Tareeka)
-// Yeh '/opt/render/project/src/uploads' banayega
-const uploadDir = path.join(process.cwd(), 'uploads'); 
+// 👇 YEH LINE BADLEIN (Sabse Zaroori)
+// __dirname = server/middleware
+// ../..     = Root Folder
+// Result    = Root/uploads
+const uploadDir = path.join(__dirname, '../../uploads'); 
 
-console.log("🔧 Multer Configured for:", uploadDir);
+console.log("🔧 Middleware Target:", uploadDir);
 
-// 2. Folder Check & Create
+// Folder Check & Create
 if (!fs.existsSync(uploadDir)) {
-    console.log("⚠️ Directory missing. Creating at ROOT:", uploadDir);
+    console.log("⚠️ Root Uploads folder missing. Creating...");
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // Absolute Path pass karein
         cb(null, uploadDir); 
     },
     filename: function (req, file, cb) {
@@ -31,23 +28,21 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    // PDF, Doc, Images allow karein
     const allowedTypes = [
         'image/jpeg', 'image/png', 'image/jpg', 
         'application/pdf', 'application/msword', 
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
-
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only Images, PDF and Docs allowed!'), false);
+        cb(new Error('Invalid file type.'), false);
     }
 };
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 1024 * 1024 * 10 },
+    limits: { fileSize: 1024 * 1024 * 15 },
     fileFilter: fileFilter
 });
 
