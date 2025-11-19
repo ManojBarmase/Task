@@ -59,15 +59,16 @@ app.use(express.json());
 // 👇 2. YEH LOGIC ADD KAREIN (Uploads Folder Auto-Create)
 // Yeh check karega ki 'uploads' folder hai ya nahi. Agar nahi hai, toh bana dega.
 // 1. Wahi same Absolute Path define karein
-const uploadDir = path.resolve(__dirname, 'uploads');
+// 1. Same Path Logic Use Karein
+const uploadDir = path.join(process.cwd(), 'server', 'uploads');
 
-// 2. Ensure karein folder maujood hai (Backup check)
+// 2. Folder Check (Safety ke liye)
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// 3. Static Files Serve karein
-// '/uploads' URL par ye folder dikhao
+// 3. Static Serve
+console.log("🚀 Serving Static Files from:", uploadDir);
 app.use('/uploads', express.static(uploadDir));
 
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

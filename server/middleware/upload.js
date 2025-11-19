@@ -1,61 +1,53 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs'); // 👈 1. fs module import karein
+const fs = require('fs');
 
-// 1. Absolute Path Banayein (server/uploads)
-// __dirname = .../project/server/middleware
-// ../uploads = .../project/server/uploads
-const uploadDir = path.resolve(__dirname, '../uploads');
+// 1. Bulletproof Path Logic (Root se calculate karein)
+// process.cwd() = Project Root
+// Path banega: ProjectRoot/server/uploads
+const uploadDir = path.join(process.cwd(), 'server', 'uploads');
 
-// 2. Folder Check & Create Logic (Recursive)
+// 2. Debugging Log (Taaki humein Render logs mein path dikhe)
+console.log("📂 Upload Directory Target:", uploadDir);
+
+// 3. Folder Create Logic
 if (!fs.existsSync(uploadDir)) {
+    console.log("⚠️ Folder missing. Creating now...");
     fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('✅ Created Absolute Uploads Directory at:', uploadDir);
+    console.log("✅ Folder Created Successfully!");
 }
 
-// 1. Kahaan aur kis naam se file save karni hai
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // 'uploads/' folder mein save karein
-        // __dirname -> current folder (middleware)
-        // ../uploads -> root ka uploads folder
-        cb(null, uploadDir);
-        // cb(null, path.join(__dirname, '../uploads/')); 
+        // 4. Multer ko ye Absolute Path dein
+        cb(null, uploadDir); 
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-       // Space hata kar clean naam banayein
+        // Space hata kar safe naam banayein
         const cleanName = file.originalname.replace(/\s+/g, '-');
         cb(null, file.fieldname + '-' + uniqueSuffix + '-' + cleanName);
     }
 });
 
-// 2. Sirf image files ko allow karein
-// 👇 IS 'fileFilter' KO REPLACE KAREIN 👇
 const fileFilter = (req, file, cb) => {
-    // Allowed file types: Images + PDF + Word Docs
     const allowedTypes = [
-        'image/jpeg', 
-        'image/png', 
-        'image/jpg', 
-        'application/pdf', // 👈 PDF ke liye zaroori
-        'application/msword', // .doc
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+        'image/jpeg', 'image/png', 'image/jpg', 
+        'application/pdf', 'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
 
     if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true); // Accept file
+        cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only JPEG, PNG, JPG, PDF, DOC, and DOCX are allowed!'), false); // Reject file
+        cb(new Error('Invalid file type. Only Images, PDF and Docs allowed!'), false);
     }
 };
 
 const upload = multer({
     storage: storage,
-    limits: {
-        fileSize: 1024 * 1024 * 10 // 5MB limit
-    },
+    limits: { fileSize: 1024 * 1024 * 10 }, // 10MB
     fileFilter: fileFilter
 });
 
-module.exports = upload; // 👈 CommonJS syntax
+module.exports = upload;
