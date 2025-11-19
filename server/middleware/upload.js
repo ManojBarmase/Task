@@ -1,5 +1,17 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs'); // 👈 1. fs module import karein
+
+// 2. Absolute Path Define Karein (server/uploads)
+// __dirname = server/middleware
+// ../uploads = server/uploads
+const uploadDir = path.join(__dirname, '../uploads');
+
+// 3. Folder Check & Create Logic (Yehi main fix hai)
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('✅ Created Uploads Directory at:', uploadDir);
+}
 
 // 1. Kahaan aur kis naam se file save karni hai
 const storage = multer.diskStorage({
@@ -7,7 +19,8 @@ const storage = multer.diskStorage({
         // 'uploads/' folder mein save karein
         // __dirname -> current folder (middleware)
         // ../uploads -> root ka uploads folder
-        cb(null, path.join(__dirname, '../uploads/')); 
+        cb(null, uploadDir);
+        // cb(null, path.join(__dirname, '../uploads/')); 
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
