@@ -2,25 +2,31 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// 1. Path Logic (Wahi jo server.js mein kaam kar raha hai)
-const uploadDir = path.join(process.cwd(), 'server', 'uploads');
+// 1. ABSOLUTE PATH GENERATE KAREIN
+// __dirname = .../server/middleware
+// ..        = .../server
+// uploads   = .../server/uploads
+const uploadDir = path.resolve(__dirname, '..', 'uploads');
 
-// 2. Debug Log (Taaki hum confirm karein ki file load hui)
-console.log("🔧 Middleware Loaded.");
-console.log("   👉 Target Directory:", uploadDir);
+console.log("🔧 Middleware Init. Absolute Path:", uploadDir);
 
-// 3. Folder Check
+// 2. FOLDER CHECK & CREATE
 if (!fs.existsSync(uploadDir)) {
-    console.log("   ⚠️ Directory missing inside middleware. Creating...");
-    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log("⚠️ Upload folder missing. Creating at:", uploadDir);
+    try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log("✅ Folder Created!");
+    } catch (err) {
+        console.error("❌ Failed to create folder:", err);
+    }
 }
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // 4. Debug Log (Har upload par dikhega)
-        console.log("📂 Multer Saving File to:", uploadDir);
+        // 3. LOGGING: Confirm karein ki Multer ko kya path mil raha hai
+        console.log("📂 Multer Writing to:", uploadDir);
         
-        // Absolute Path Pass karein
+        // Absolute path pass karein
         cb(null, uploadDir); 
     },
     filename: function (req, file, cb) {
@@ -31,6 +37,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
+    // PDF, Doc, Images allow karein
     const allowedTypes = [
         'image/jpeg', 'image/png', 'image/jpg', 
         'application/pdf', 'application/msword', 
