@@ -2,6 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const fs = require('fs');
 require('dotenv').config(); 
 const seedDatabase = require('./seedData');
 const path = require('path');
@@ -55,7 +56,18 @@ app.use(cors(corsOptions));
 // app.use(cors()); 
 app.use(express.json()); 
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// 👇 2. YEH LOGIC ADD KAREIN (Uploads Folder Auto-Create)
+// Yeh check karega ki 'uploads' folder hai ya nahi. Agar nahi hai, toh bana dega.
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('📁 Uploads directory created successfully!');
+}
+
+// Static Uploads
+app.use('/uploads', express.static(uploadDir)); // Path variable use karein jo upar banaya
+
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 2. MongoDB Connection...
 if (!MONGO_URI) {
     console.error("❌ ERROR: MONGO_URI is not defined in .env file.");
