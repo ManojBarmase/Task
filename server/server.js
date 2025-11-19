@@ -32,7 +32,8 @@ const allowedOrigins = [
   'http://localhost:5173',  // Local Vite Dev Server का default port
   'http://127.0.0.1:5173',
   'http://localhost:5174',
-  'https://task-pink-seven.vercel.app/'
+  'https://task-1mu1.onrender.com',
+  'https://task-pink-seven.vercel.app'
 ];
 
 const corsOptions = {
