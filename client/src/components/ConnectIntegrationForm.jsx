@@ -31,36 +31,57 @@ const ConnectIntegrationForm = ({ integration, onClose, onIntegrationConnected }
         }));
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccess(false);
+    // const handleSubmit = (e) => {
+    //     e.preventDefault();
+    //     setLoading(true);
+    //     setError(null);
+    //     setSuccess(false);
 
-        // --- Mock Connection API Call ---
-        // In a real application, this would validate credentials (apiKey) with the backend.
+    //     // --- Mock Connection API Call ---
+    //     // In a real application, this would validate credentials (apiKey) with the backend.
         
-        setTimeout(() => {
-            setLoading(false);
+    //     setTimeout(() => {
+    //         setLoading(false);
             
-            if (!formData.apiKey || formData.apiKey === 'fail') {
-                setError("Connection failed. Check your API Key and try again.");
-                return;
-            }
+    //         if (!formData.apiKey || formData.apiKey === 'fail') {
+    //             setError("Connection failed. Check your API Key and try again.");
+    //             return;
+    //         }
             
-            setSuccess(true);
+    //         setSuccess(true);
             
-            // 💡 Parent component को सूचित करें कि यह इंटीग्रेशन अब Connected है
-            onIntegrationConnected(integration.id, {
-                status: 'Connected',
-                syncDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                syncFrequency: formData.syncFrequency
-            });
+    //         // 💡 Parent component को सूचित करें कि यह इंटीग्रेशन अब Connected है
+    //         onIntegrationConnected(integration.id, {
+    //             status: 'Connected',
+    //             syncDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    //             syncFrequency: formData.syncFrequency
+    //         });
             
-            // Close the modal after a short delay
-            setTimeout(onClose, 1500); 
-        }, 1500);
-    };
+    //         // Close the modal after a short delay
+    //         setTimeout(onClose, 1500); 
+    //     }, 1500);
+    // };
+
+     const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Parent ko data bhejein
+    onIntegrationConnected(integration._id, { // _id use karein (MongoDB ID)
+        status: 'Connected',
+        syncFrequency: formData.syncFrequency,
+        clientId: formData.clientId,
+        apiKey: formData.apiKey
+    });
+    
+    // (API call ab IntegrationsPage mein ho raha hai, isliye yahan bas close karein)
+    // Lekin agar aap chahein toh loading/error handling yahan bhi rakh sakte hain
+    
+    setTimeout(() => { // Thoda delay UI effect ke liye
+        setLoading(false);
+        onClose();
+    }, 1000);
+};
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">

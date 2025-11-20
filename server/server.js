@@ -96,6 +96,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/vendors', vendorRoutes); 
 app.use('/api/contracts', contractRoutes); 
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/integrations', require('./routes/integration'));
 
 // app.get('/', (req, res) => {
 //     res.send('ProcureIQ Backend API is running...');

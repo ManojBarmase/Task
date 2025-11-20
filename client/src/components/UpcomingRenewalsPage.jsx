@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // 👈 useCallback add karein
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, AlertCircle, Calendar, DollarSign, RefreshCw } from 'lucide-react';
+// 👇 1. IMPORT RENEW FORM
+import RenewContractForm from './RenewContractForm'; 
 
 // API URL Setup
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -26,41 +28,49 @@ const getDaysLeft = (endDate) => {
 const UpcomingRenewalsPage = () => {
     const [contracts, setContracts] = useState([]);
     const [loading, setLoading] = useState(true);
+    // 👇 2. STATE FOR MODAL
+    const [showRenewForm, setShowRenewForm] = useState(false);
+    
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
-    useEffect(() => {
-        const fetchContracts = async () => {
-            try {
-                const res = await axios.get(`${API_BASE_URL}/api/contracts`, {
-                    headers: { 'x-auth-token': token }
-                });
-                // Filter only active/pending contracts
-                const active = res.data.filter(c => c.renewalStatus !== 'Cancelled');
-                setContracts(active);
-            } catch (err) {
-                console.error("Error fetching contracts", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (token) fetchContracts();
+    // 👇 3. DATA FETCHING LOGIC (Extracted to function for reuse)
+    const fetchContracts = useCallback(async () => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/contracts`, {
+                headers: { 'x-auth-token': token }
+            });
+            // Filter only active/pending contracts
+            const active = res.data.filter(c => c.renewalStatus !== 'Cancelled');
+            setContracts(active);
+        } catch (err) {
+            console.error("Error fetching contracts", err);
+        } finally {
+            setLoading(false);
+        }
     }, [token]);
 
+    useEffect(() => {
+        if (token) fetchContracts();
+    }, [token, fetchContracts]);
+
+    // 👇 4. HANDLER FOR SUCCESSFUL RENEWAL
+    const handleContractRenewed = () => {
+        setShowRenewForm(false); // Close modal
+        fetchContracts(); // Refresh data to remove renewed contract from 'Upcoming' if date changed
+    };
+
     // --- Filtering Logic ---
-    // Critical: 0-30 days
     const criticalRenewals = contracts.filter(c => {
         const days = getDaysLeft(c.end_date);
         return days >= 0 && days <= 30;
     });
 
-    // Soon: 31-60 days
     const soonRenewals = contracts.filter(c => {
         const days = getDaysLeft(c.end_date);
         return days > 30 && days <= 60;
     });
 
-    // Upcoming: 61-90 days
     const upcomingRenewals = contracts.filter(c => {
         const days = getDaysLeft(c.end_date);
         return days > 60 && days <= 90;
@@ -85,12 +95,17 @@ const UpcomingRenewalsPage = () => {
                     <h1 className="text-2xl font-bold text-gray-800">Upcoming Renewals</h1>
                     <p className="text-gray-500">All contracts expiring within the next 90 days</p>
                 </div>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center text-sm font-medium hover:bg-blue-700">
+                
+                {/* 👇 5. BUTTON CLICK HANDLER ADDED */}
+                <button 
+                    onClick={() => setShowRenewForm(true)}
+                    className="bg-sky-600 text-white px-4 py-2 rounded-lg flex items-center text-sm font-medium hover:bg-sky-700 transition-colors"
+                >
                     <RefreshCw className="w-4 h-4 mr-2" /> Renew Contract
                 </button>
             </div>
 
-            {/* Metric Cards (Screenshot 125 Style) */}
+            {/* Metric Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <MetricCard title="Total Renewals" value={totalRenewals90Days} subtitle="Next 90 days" icon={<Clock className="text-blue-500" />} />
                 <MetricCard title="Critical (≤30 days)" value={criticalRenewals.length} subtitle="Immediate attention" icon={<AlertCircle className="text-red-500" />} isCritical />
@@ -98,7 +113,7 @@ const UpcomingRenewalsPage = () => {
                 <MetricCard title="Total Value" value={formatCurrency(totalValue90Days)} subtitle="Renewal value" icon={<DollarSign className="text-green-500" />} />
             </div>
 
-            {/* 1. Critical Renewals Section (Red) */}
+            {/* 1. Critical Renewals Section */}
             <RenewalSection 
                 title="Critical Renewals - Action Required" 
                 contracts={criticalRenewals} 
@@ -106,7 +121,7 @@ const UpcomingRenewalsPage = () => {
                 icon={<AlertCircle className="w-5 h-5 text-red-600" />}
             />
 
-            {/* 2. Renewals Due 31-60 Days (Orange/Yellow) */}
+            {/* 2. Renewals Due 31-60 Days */}
             <RenewalSection 
                 title="Renewals Due in 31-60 Days" 
                 contracts={soonRenewals} 
@@ -114,7 +129,7 @@ const UpcomingRenewalsPage = () => {
                 icon={<Calendar className="w-5 h-5 text-yellow-600" />}
             />
 
-            {/* 3. Renewals Due 61-90 Days (Blue) */}
+            {/* 3. Renewals Due 61-90 Days */}
             <RenewalSection 
                 title="Renewals Due in 61-90 Days" 
                 contracts={upcomingRenewals} 
@@ -122,11 +137,19 @@ const UpcomingRenewalsPage = () => {
                 icon={<Calendar className="w-5 h-5 text-blue-600" />}
             />
 
+            {/* 👇 6. RENDER RENEW FORM MODAL */}
+            {showRenewForm && (
+                <RenewContractForm 
+                    onClose={() => setShowRenewForm(false)} 
+                    onContractRenewed={handleContractRenewed} 
+                />
+            )}
+
         </div>
     );
 };
 
-// --- Sub-Components ---
+// --- Sub-Components (Same as before) ---
 
 const MetricCard = ({ title, value, subtitle, icon, isCritical }) => (
     <div className={`bg-white p-5 rounded-xl border ${isCritical ? 'border-red-200 bg-red-50' : 'border-gray-200'} shadow-sm`}>
@@ -152,7 +175,7 @@ const RenewalSection = ({ title, contracts, color, icon }) => {
 
     const theme = colors[color];
 
-    if (contracts.length === 0) return null; // Don't show empty sections
+    if (contracts.length === 0) return null; 
 
     return (
         <div className={`rounded-xl border ${theme.border} bg-white shadow-sm overflow-hidden`}>
