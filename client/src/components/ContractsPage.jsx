@@ -261,7 +261,19 @@ const navigate = useNavigate();
                 
                 {/* Upcoming Renewals (MOCK Data based on Screenshot 20) */}
                 <div className="space-y-4">
-                    <h3 className="text-base font-semibold text-gray-600">Upcoming Renewals</h3>
+                    {/* <h3 className="text-base font-semibold text-gray-600">Upcoming Renewals</h3> */}
+                    {/* 👇 HEADING KO FLEX CONTAINER MEIN DAL KAR BUTTON ADD KAREIN */}
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-base font-semibold text-gray-600">Upcoming Renewals</h3>
+                        
+                        {/* VIEW ALL BUTTON */}
+                        <button 
+                            onClick={() => navigate('/renewals')} 
+                            className="text-xs font-medium text-sky-600 hover:text-sky-800 hover:underline"
+                        >
+                            View All
+                        </button>
+                    </div>
                     {contracts.slice(0, 5).map((c) => ( // Show top 5 soonest expiring
                          <div key={c._id + 'upcoming'} className=" p-3 bg-red-50 border border-gray-200 rounded-lg">
                             <p className="text-sm font-normal text-gray-900">{c.vendor?.vendorName || c.contractTitle}</p>

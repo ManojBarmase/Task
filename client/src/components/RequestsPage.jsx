@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 // 👇️ CHANGED: 'HelpCircle' (Clarification Needed के लिए) और 'MailOpen' (Reply देखने के लिए) आइकन जोड़े गए
-import { Mail, MessageSquare, CornerDownRight, AlertTriangle, Loader2, Edit, Trash, Filter, Plus, Clock, Eye, Check, X, CornerDownLeft, HelpCircle, MailOpen,Send } from 'lucide-react';
+import { Mail, MessageSquare, CornerDownRight, AlertTriangle, Loader2, Edit, Trash, Filter, Plus, Clock, Eye, Check, X, CornerDownLeft, HelpCircle, MailOpen,Send, CircleX} from 'lucide-react';
 import RequestForm from './RequestForm'; // RequestForm का उपयोग करें
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -478,7 +478,7 @@ useEffect(() => {
                                                 {isAdminOrApprover && (
                                                     <button 
                                                         onClick={() => handleClarificationClick(request)}
-                                                        className="relative group text-yellow-800 p-2 rounded-full transition-colors "
+                                                        className="relative group text-yellow-800 hover: p-2 rounded-full transition-colors "
                                                     >
                                                         <Send className="w-5 h-5" /> 
                                                         {/* Custom Tooltip */}
@@ -492,7 +492,7 @@ useEffect(() => {
                                                         onClick={() => handleEdit(request)}
                                                         className="relative group text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-blue-100 transition-colors"
                                                     >
-                                                        <Edit className="w-4 h-4" />
+                                                        <Edit className="w-5 h-5" />
                                                         {/* Custom Tooltip */}
                                                         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
                                                             Edit Request
@@ -563,7 +563,7 @@ useEffect(() => {
                                         )}
 
                                         {/* 4. Status: Approved/Rejected */}
-                                        {(request.status === 'Approved' || request.status === 'Rejected') && (
+{/*                                         {(request.status === 'Approved' || request.status === 'Rejected') && (
                                             <span 
                                                 onClick={() => handleReplyClick(request)} 
                                                 className={`relative group p-2 rounded-full cursor-pointer transition-colors ${
@@ -573,12 +573,42 @@ useEffect(() => {
                                                 }`}
                                             >
                                                 <MessageSquare className="w-5 h-5" />
-                                                {/* Custom Tooltip */}
+                                   
                                                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
                                                     View Communication History
-                                  </span>
+                                                </span>
                                             </span>
-                                        )}
+                                        )} */}
+                                         {/* 4. Status: Approved/Rejected */}
+                                          {(request.status === 'Approved' || request.status === 'Rejected') && (
+                                              <span 
+                                                  onClick={() => handleReplyClick(request)} 
+                                                  className={`relative group p-2 rounded-full cursor-pointer transition-colors ${
+                                                      (request.reviewerNotes || request.requesterReply) 
+                                                      ? 'hover:bg-gray-100' 
+                                                      : ''
+                                                  }`}
+                                              >
+                                                  {/* Icon Logic */}
+                                                  {request.status === 'Approved' ? (
+                                                      <Check className="w-5 h-5 text-green-600" />
+                                                  ) : (
+                                                      <CircleX className="w-5 h-5 text-red-600" />
+                                                  )}
+
+                                                  {/* Custom Tooltip */}
+                                                  <span className={`
+                                                      absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
+                                                      invisible opacity-0 group-hover:visible group-hover:opacity-100 
+                                                      px-3 py-1 text-white text-sm font-medium rounded-md shadow-lg 
+                                                      transition-opacity whitespace-nowrap z-10
+                                                      ${request.status === 'Approved' ? 'bg-green-700' : 'bg-red-700'} 
+                                                  `}>
+                                                      {/* Tooltip Text Logic */}
+                                                      {request.status === 'Approved' ? "Approved" : "Declined"}
+                                                  </span>
+                                              </span>
+                                          )}
     
                                     </td>
                                 </tr>
