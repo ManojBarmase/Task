@@ -1,3 +1,4 @@
+// server/models/User.js
 const mongoose = require('mongoose'); // 👈 CommonJS syntax
 
 const UserSchema = new mongoose.Schema({

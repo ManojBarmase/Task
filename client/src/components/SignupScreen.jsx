@@ -4,12 +4,15 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { User, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import logo from '../assets/logo1.png'; // Logo import
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const SignupScreen = () => {
     const [formData, setFormData] = useState({
-        name: '',
+        firstName: '', // 👈 Changed from name
+        lastName: '',  // 👈 Added lastName
         email: '',
         password: '',
     });
@@ -26,8 +29,8 @@ const SignupScreen = () => {
         setLoading(true);
         setError(null);
 
-        // Simple validation
-        if (!formData.name || !formData.email || !formData.password) {
+        // Validation updated for first/last name
+        if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
             setError("All fields are required.");
             setLoading(false);
             return;
@@ -35,19 +38,13 @@ const SignupScreen = () => {
 
         try {
             // Call the Backend Register API
-            const res = await axios.post(`api/auth/register`, formData);
+            const res = await axios.post(`${API_BASE_URL}/api/auth/register`, formData);
             
-            // Registration is successful, the API returns a token.
-            // We'll store it and redirect to the dashboard.
             localStorage.setItem('token', res.data.token); 
-            localStorage.setItem('userRole', res.data.role); // 👈️ यह लाइन जोड़ें
-            // NOTE: Register API does not return role by default, 
-            // but we can assume 'employee' or fetch later. For now, we only store token.
+            localStorage.setItem('userRole', res.data.role); 
 
-            // Success message or direct redirect
             alert("Registration successful! Redirecting to Dashboard."); 
 
-            // Redirect to dashboard after a short delay
             setTimeout(() => {
                 navigate('/requests'); 
             }, 1000);
@@ -66,30 +63,52 @@ const SignupScreen = () => {
                 
                 {/* Header and Logo */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center p-3 rounded-full bg-sky-100 text-sky-600 mb-4">
-                        <Mail className="w-6 h-6" />
+                    <div className="inline-flex items-center justify-center p-3 mb-4">
+                        {/* Logo Lagaya */}
+                        <img src={logo} alt="ProcureIQ Logo" className="h-12 w-auto object-contain" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">Create Your ProcureIQ Account</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Create Your Account</h2>
                     <p className="text-sm text-gray-500">Sign up to start managing your requests.</p>
                 </div>
                 
-                <form onSubmit={handleSignup} className="space-y-6">
+                <form onSubmit={handleSignup} className="space-y-4">
                     
-                    {/* Name Input */}
-                    <div>
-                        <label htmlFor="name" className="sr-only">Full Name</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                id="name"
-                                name="name"
-                                type="text"
-                                required
-                                value={formData.name}
-                                onChange={handleChange}
-                                placeholder="Full Name"
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 text-sm"
-                            />
+                    {/* First Name & Last Name Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* First Name */}
+                        <div>
+                            <label htmlFor="firstName" className="sr-only">First Name</label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    required
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    placeholder="First Name"
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Last Name */}
+                        <div>
+                            <label htmlFor="lastName" className="sr-only">Last Name</label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    id="lastName"
+                                    name="lastName"
+                                    type="text"
+                                    required
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    placeholder="Last Name"
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 text-sm"
+                                />
+                            </div>
                         </div>
                     </div>
 

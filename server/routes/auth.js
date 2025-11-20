@@ -7,46 +7,110 @@ const auth = require('../middleware/auth');
 const upload = require('../middleware/upload'); // 👈 Multer ko import karein
 
 const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.error("JWT_SECRET is not set in .env");
+}
 
 // @route   POST api/auth/register
 // @desc    Register new user
 router.post('/register', async (req, res) => {
-    // 'name' ki jagah 'firstName' aur 'lastName' lein (frontend signup form se)
-    // Agar signup form sirf 'name' bhej raha hai, toh use 'firstName' maan lein
+    // 👇 AB HUM SEEDHA firstName AUR lastName LENGE
     const { firstName, lastName, email, password } = req.body;
-    
-    // Fallback agar signup form abhi bhi 'name' bhej raha hai
-    const fName = firstName || req.body.name; 
 
     try {
+        // 1. Check user exist
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ msg: 'User already exists' });
         }
 
-        user = new User({ 
-            firstName: fName, 
-            lastName: lastName || '', // Agar lastName nahi hai toh empty string
-            email, 
-            password 
+        // 2. Create User (No splitting needed now)
+        user = new User({
+            firstName,
+            lastName,
+            email,
+            password
         });
 
+        // 3. Hash Password
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
+
+        // 4. Save User
         await user.save();
 
-        const payload = { user: { id: user.id, role: user.role } };
+        // 5. Generate Token
+        const payload = {
+            user: {
+                id: user.id,
+                role: user.role
+            }
+        };
 
-        jwt.sign(payload, JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
-            if (err) throw err;
-            res.json({ token, role: user.role, user: { id: user.id, firstName: user.firstName, email: user.email } });
-        });
+        jwt.sign(
+            payload,
+            JWT_SECRET,
+            { expiresIn: '5h' },
+            (err, token) => {
+                if (err) throw err;
+                res.json({ 
+                    token, 
+                    role: user.role,
+                    user: {
+                        id: user.id,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        email: user.email,
+                        role: user.role
+                    } 
+                });
+            }
+        );
 
     } catch (err) {
-        console.error(err.message);
+        console.error("Register Error:", err.message);
         res.status(500).send('Server error');
     }
 });
+// @route   POST api/auth/register
+// @desc    Register new user
+// router.post('/register', async (req, res) => {
+//     // 'name' ki jagah 'firstName' aur 'lastName' lein (frontend signup form se)
+//     // Agar signup form sirf 'name' bhej raha hai, toh use 'firstName' maan lein
+//     const { firstName, lastName, email, password } = req.body;
+    
+//     // Fallback agar signup form abhi bhi 'name' bhej raha hai
+//     const fName = firstName || req.body.name; 
+
+//     try {
+//         let user = await User.findOne({ email });
+//         if (user) {
+//             return res.status(400).json({ msg: 'User already exists' });
+//         }
+
+//         user = new User({ 
+//             firstName: fName, 
+//             lastName: lastName || '', // Agar lastName nahi hai toh empty string
+//             email, 
+//             password 
+//         });
+
+//         const salt = await bcrypt.genSalt(10);
+//         user.password = await bcrypt.hash(password, salt);
+//         await user.save();
+
+//         const payload = { user: { id: user.id, role: user.role } };
+
+//         jwt.sign(payload, JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
+//             if (err) throw err;
+//             res.json({ token, role: user.role, user: { id: user.id, firstName: user.firstName, email: user.email } });
+//         });
+
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server error');
+//     }
+// });
 
 // @route   POST api/auth/login
 router.post('/login', async (req, res) => {
