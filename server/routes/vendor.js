@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const Vendor = require('../models/Vendor');
 // 👇 YAHAN CHANGE HAI: Local Multer hata kar Central Middleware import karein
 const upload = require('../middleware/upload'); 
+const Contract = require('../models/Contract');
 
 // @route   POST api/vendors
 // @desc    Add a new vendor
@@ -65,15 +66,30 @@ router.get('/', auth, async (req, res) => {
 
 // @route   GET api/vendors/:id
 // @desc    Get Single Vendor by ID
+// @route   GET api/vendors/:id
+// @desc    Get Single Vendor + Their Contracts
 router.get('/:id', auth, async (req, res) => {
     try {
+        // 1. Vendor dhoondhein
         const vendor = await Vendor.findById(req.params.id);
 
         if (!vendor) {
             return res.status(404).json({ msg: 'Vendor not found' });
         }
 
-        res.json(vendor);
+        // 2. Is Vendor se jude saare Contracts dhoondhein
+        // Hum check kar rahe hain ki Contract ke 'vendor' field mein ye ID kahan hai
+        const contracts = await Contract.find({ vendor: req.params.id });
+
+        // 3. Mongoose object ko plain object banayein taaki hum naya data jod sakein
+        const vendorData = vendor.toObject();
+        
+        // 4. Contracts array ko vendor object mein jod dein
+        vendorData.contracts = contracts; 
+
+        // 5. Frontend ko bhejein
+        res.json(vendorData);
+
     } catch (err) {
         console.error(err.message);
         if (err.kind === 'ObjectId') {
