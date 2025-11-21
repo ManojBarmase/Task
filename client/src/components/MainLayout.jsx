@@ -69,7 +69,7 @@ const navLinks = [
                 <img 
                     src={logo} 
                     alt="ProcureIQ Logo" 
-                    className="h-10 w-auto object-contain" // h-10 size adjust karne ke liye hai
+                    className="h-7 w-auto object-contain" // h-10 size adjust karne ke liye hai
                 />
             </div>
 

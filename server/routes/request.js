@@ -1,324 +1,664 @@
-// server/routes/request.js
-
+// // server/routes/request.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth'); // Auth middleware
+const auth = require('../middleware/auth');
 const Request = require('../models/Request');
 const role = require('../middleware/role');
+const upload = require('../middleware/upload');
 
-// @route   POST api/requests
-// @desc    Create a new Purchase Request (Create)
-// @access  Private
-// ⭐ (कोई बदलाव नहीं - यह सही है)
-router.post('/', auth, async (req, res) => {
-    try {
-        const { title, description, cost, department, vendorName } = req.body;
+// @route   POST api/requests
+// @desc    Create a new Purchase Request
+// @access  Private
+// 👇 UPDATED: Vendor ID, CostPerLicense, NumLicenses added
+// 👇 Updated POST Route
+router.post('/', [auth, upload.array('attachments')], async (req, res) => {
+    try {
+        // Destructure fields
+        const { title, description, cost, department, vendor, isNewVendor, proposedVendor, costPerLicense, numLicenses } = req.body;
 
-        const newRequest = new Request({
-            title,
-            description,
-            cost,
-            department,
-            vendorName: vendorName || '',
-            requester: req.user.id, // Auth middleware से यूज़र ID प्राप्त करें
-            status: 'Pending'
-        });
+        // JSON Parsing for Proposed Vendor (Kyunki FormData string bhejta hai)
+        let parsedProposedVendor = {};
+        if (isNewVendor === 'true' && proposedVendor) {
+             try {
+                 parsedProposedVendor = JSON.parse(proposedVendor);
+             } catch (e) {
+                 parsedProposedVendor = proposedVendor; // Fallback
+             }
+        }
 
-        const request = await newRequest.save();
-        res.json(request);
+        // File Paths Collect karein
+        let attachmentPaths = [];
+        if (req.files) {
+            attachmentPaths = req.files.map(file => `uploads/${file.filename}`);
+        }
 
-    } catch (err) {
-        console.error(err.message);
-        // MongoDB validation error (जैसे required field missing)
-        if (err.name === 'ValidationError') {
-            return res.status(400).json({ msg: err.message });
-        }
-        res.status(500).send('Server error');
-    }
+        const newRequest = new Request({
+            title,
+            description,
+            cost: parseFloat(cost) || 0,
+            department,
+            requester: req.user.id,
+
+            // Vendor Logic
+            vendor: (isNewVendor === 'true') ? null : (vendor || null),
+            isNewVendor: isNewVendor === 'true',
+            proposedVendor: (isNewVendor === 'true') ? parsedProposedVendor : {},
+
+            costPerLicense: parseFloat(costPerLicense) || 0,
+            numLicenses: parseInt(numLicenses) || 0,
+
+            // 👇 Save Attachments
+            attachments: attachmentPaths, 
+            status: 'Pending'
+        });
+
+        const request = await newRequest.save();
+        res.json(request);
+
+    } catch (err) {
+        console.error("Server Error:", err);
+        res.status(500).send('Server error');
+    }
 });
 
-
-// @route   GET api/requests
-// @desc    Get all requests (filtered by role)
-// @access  Private
-// ⭐ (कोई बदलाव नहीं - यह सही है)
+// @route   GET api/requests
+// @desc    Get all requests (filtered by role)
+// @access  Private
+// 👇 UPDATED: Vendor population added
 router.get('/', auth, async (req, res) => {
-    try {
-        // 1. Query Parameters से फ़िल्टर वैल्यू प्राप्त करें
-        const { department, status, minCost, maxCost } = req.query;
-        const userRole = req.user.role;
-        let filter = {}; // MongoDB query filter object
+    try {
+        const { department, status, minCost, maxCost } = req.query;
+        const userRole = req.user.role;
+        let filter = {};
 
-        // 2. Department Filter
-        if (department && department !== 'All Departments') {
-            filter.department = department;
-        }
+        if (department && department !== 'All Departments') filter.department = department;
+        if (status && status !== 'All Statuses') filter.status = status;
 
-        // 3. Status Filter
-        if (status && status !== 'All Statuses') {
-            filter.status = status;
-        }
+        const minC = parseFloat(minCost);
+        const maxC = parseFloat(maxCost);
+        if (!isNaN(minC) && !isNaN(maxC)) {
+            if (minC > 0 || maxC < 9999999) filter.cost = { $gte: minC, $lte: maxC };
+        }
+        
+        if (userRole === 'employee') {
+            filter.requester = req.user.id;
+        }
+        
+        const requests = await Request.find(filter)
+            .sort({ createdAt: -1})
+            .populate('requester', ['firstName', 'lastName', 'email']) // 👈 Updated for firstName/lastName
+            .populate('vendor', ['vendorName', 'productTool']); // 👈 Populate Vendor Details
 
-        // 4. Cost Range Filter (हमेशा लागू करें, क्योंकि minCost/maxCost हमेशा भेजे जाते हैं)
-        const minC = parseFloat(minCost);
-        const maxC = parseFloat(maxCost);
+        res.json(requests);
 
-        if (!isNaN(minC) && !isNaN(maxC)) {
-            // यदि min/max 0/बड़ी संख्या नहीं है, तो cost filter जोड़ें
-            if (minC > 0 || maxC < 9999999) {
-                 filter.cost = { $gte: minC, $lte: maxC }; 
-            }
-        }
-        
-        // ⭐ FIX: Employee के लिए Requester फ़िल्टर जोड़ें (ओवरराइट न करें!)
-        if (userRole === 'employee') {
-            // मौजूदा filters (department, status, cost) को रखते हुए requester ID जोड़ें
-            filter.requester = req.user.id;
-        }
-        
-        // Find requests based on the combined filter
-        const requests = await Request.find(filter)
-            .sort({ createdAt: -1})
-            .populate('requester', ['name', 'email']); // requester का नाम Populating
-
-        res.json(requests);
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
 });
 
-
-// @route   GET api/requests/:id
-// @desc    Get a single request by its ID
-// @access  Private
+// @route   GET api/requests/:id
+// @desc    Get a single request by ID
+// @access  Private
+// 👇 UPDATED: Vendor population added
 router.get('/:id', auth, async (req, res) => {
-    try {
-        const request = await Request.findById(req.params.id)
-            .populate('requester', ['name', 'email', 'department']); // रिक्वेस्टर की जानकारी भी लाएं
+    try {
+        const request = await Request.findById(req.params.id)
+            .populate('requester', ['firstName', 'lastName', 'email', 'department'])
+            .populate('vendor', ['vendorName', 'productTool', 'contactEmail']); // 👈 Populate Vendor
 
-        if (!request) {
-            return res.status(404).json({ msg: 'Request not found' });
-        }
+        if (!request) return res.status(404).json({ msg: 'Request not found' });
 
-        // (सुरक्षा जांच - क्या यह कर्मचारी सिर्फ अपनी रिक्वेस्ट देख सकता है?)
-        if (req.user.role === 'employee' && request.requester._id.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'Not authorized to view this request' });
-        }
-        
-        res.json(request);
-
-    } catch (err) {
-        console.error(err.message);
-        if (err.kind === 'ObjectId') {
-            return res.status(404).json({ msg: 'Request not found' });
-        }
-        res.status(500).send('Server error');
-    }
+        if (req.user.role === 'employee' && request.requester._id.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Not authorized to view this request' });
+        }
+        
+        res.json(request);
+    } catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') return res.status(404).json({ msg: 'Request not found' });
+        res.status(500).send('Server error');
+    }
 });
 
-// @route   PUT api/requests/:id
-// @desc    Employee edits their own request
-// @access  Private (Employee only)
-router.put('/:id', auth, role(['employee']), async (req, res) => {
-    const { title, description, cost, department, vendorName } = req.body;
-    
-    try {
-        let request = await Request.findById(req.params.id);
+// @route   PUT api/requests/:id
+// @desc    Employee edits their own request
+// @access  Private (Employee only)
+// 👇 UPDATED: Update Vendor & New Fields
+// @route   PUT api/requests/:id
+// @desc    Employee edits their own request
+// @access  Private (Employee only)
+// 👇 UPDATED: Added 'upload.array' middleware to handle FormData
+router.put('/:id', [auth, role(['employee']), upload.array('attachments')], async (req, res) => {
+    try {
+        // 1. Destructure Data from Body
+        const { 
+            title, description, cost, department, 
+            vendor, isNewVendor, proposedVendor, 
+            costPerLicense, numLicenses 
+        } = req.body;
+    
+        let request = await Request.findById(req.params.id);
+        if (!request) return res.status(404).json({ msg: 'Request not found' });
 
-        if (!request) {
-            return res.status(404).json({ msg: 'Request not found' });
-        }
+        // Authorization Check
+        if (request.requester.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
 
-        // 1. सुरक्षा जांच: क्या यह वही कर्मचारी है जिसने इसे बनाया है?
-        if (request.requester.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'User not authorized' });
-        }
+        // Status Check
+        if (request.status !== 'Pending') {
+            return res.status(400).json({ msg: 'Cannot edit a request that is already under review.' });
+        }
 
-        // 2. लॉजिक जांच: क्या रिक्वेस्ट अभी भी 'Pending' है?
-        if (request.status !== 'Pending') {
-            return res.status(400).json({ msg: 'Cannot edit a request that is already under review.' });
-        }
+        // 2. JSON Parsing for Proposed Vendor (FormData string bhejta hai)
+        let parsedProposedVendor = {};
+        if (String(isNewVendor) === 'true' && proposedVendor) {
+             try {
+                 parsedProposedVendor = JSON.parse(proposedVendor);
+             } catch (e) {
+                 parsedProposedVendor = proposedVendor;
+             }
+        }
 
-        // 3. अपडेट करें
-        const updatedFields = {
-            title,
-            description,
-            cost: parseFloat(cost) || 0,
-            department,
-            vendorName: vendorName || ''
-        };
+        // 3. File Paths Collect (Agar nayi files upload ki hain)
+        let newAttachmentPaths = [];
+        if (req.files && req.files.length > 0) {
+            newAttachmentPaths = req.files.map(file => `uploads/${file.filename}`);
+        }
 
-        request = await Request.findByIdAndUpdate(
-            req.params.id,
-            { $set: updatedFields },
-            { new: true }
-        ).populate('requester', ['name', 'email']); // फ्रंटएंड को अपडेटेड डेटा भेजें
+        // 4. Prepare Updated Object
+        const updatedFields = {
+            title,
+            description,
+            cost: parseFloat(cost) || 0,
+            department,
+            
+            // Vendor Logic
+            vendor: (String(isNewVendor) === 'true') ? null : (vendor || null),
+            isNewVendor: String(isNewVendor) === 'true',
+            proposedVendor: (String(isNewVendor) === 'true') ? parsedProposedVendor : {},
 
-        res.json(request);
+            costPerLicense: parseFloat(costPerLicense) || 0,
+            numLicenses: parseInt(numLicenses) || 0
+        };
 
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
+        // 5. Update Database
+        // Hum purane attachments rakhenge aur naye add karenge ($push ka use karke ya array merge karke)
+        // Yahan hum simple update kar rahe hain, lekin attachments ke liye special logic
+        
+        const updatedRequest = await Request.findByIdAndUpdate(
+            req.params.id,
+            { 
+                $set: updatedFields,
+                // Agar nayi files hain, toh unhe existing array mein add karo
+                ...(newAttachmentPaths.length > 0 && { $push: { attachments: { $each: newAttachmentPaths } } })
+            },
+            { new: true }
+        )
+        .populate('requester', ['firstName', 'lastName'])
+        .populate('vendor');
+
+        res.json(updatedRequest);
+
+    } catch (err) {
+        console.error("Update Request Error:", err.message);
+        res.status(500).send('Server error');
+    }
 });
 
-// @route   PUT api/requests/:id/status
-// @desc    Approve or Reject a Request (Final Decision)
-// @access  Private (Approver/Admin)
+
+// ... (Baaki routes: STATUS, DELETE, CLARIFY, REPLY waise hi rahenge) ...
+// ... (Aap apna purana status/delete code yahan paste kar sakte hain, usme changes ki zaroorat nahi hai)
+
+// @route   PUT api/requests/:id/status
 router.put('/:id/status', auth, role(['approver', 'admin']), async (req, res) => {
-    const { status } = req.body; // status must be 'Approved' or 'Rejected'
-    const { id } = req.params;
+    const { status } = req.body;
+    const { id } = req.params;
 
-    // 👇️ CHANGED: सेफ्टी चेक को केवल 'Approved' और 'Rejected' के लिए सीमित किया गया
-    if (!['Approved', 'Rejected'].includes(status)) {
-        return res.status(400).json({ msg: 'Invalid status update. Must be Approved or Rejected.' });
-    }
-    // 👆️ END CHANGE
+    if (!['Approved', 'Rejected'].includes(status)) {
+        return res.status(400).json({ msg: 'Invalid status update.' });
+    }
 
-    try {
-        let request = await Request.findById(id);
+    try {
+        let request = await Request.findById(id);
+        if (!request) return res.status(404).json({ msg: 'Request not found' });
 
-        if (!request) {
-            return res.status(404).json({ msg: 'Request not found' });
-        }
+        if (request.status !== 'Pending' && request.status !== 'In Review') {
+            return res.status(400).json({ msg: `Cannot update status.` });
+        }
 
-        // 👇️ CHANGED: अप्रूवल केवल Pending या In Review रिक्वेस्ट पर ही हो सकता है
-        if (request.status !== 'Pending' && request.status !== 'In Review') {
-            return res.status(400).json({ msg: `Cannot approve/reject a request with status '${request.status}'` });
-        }
-        // 👆️ END CHANGE
+        request.status = status;
+        if (status === 'Approved') request.approvalDate = Date.now();
 
-        // Status update करें
-        request.status = status;
-        
-        // यदि approved, तो approval date सेट करें
-        if (status === 'Approved') {
-            request.approvalDate = Date.now();
-        } else if (status === 'Rejected') {
-            // (Approval date को null ही रहने दें)
-        }
-
-        await request.save();
-        res.json(request);
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
+        await request.save();
+        res.json(request);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
 });
 
-// @route   DELETE api/requests/:id
-// @desc    Delete a Request
-// @access  Private (Admin)
-// ⭐ (कोई बदलाव नहीं - यह सही है)
+// @route   DELETE api/requests/:id
 router.delete('/:id', auth, role(['admin']), async (req, res) => {
-    try {
-        // (हम कर्मचारी को भी उसकी Pending रिक्वेस्ट डिलीट करने की अनुमति दे सकते हैं,
-        //  लेकिन अभी के लिए इसे Admin-only रखते हैं)
-        const request = await Request.findByIdAndDelete(req.params.id);
-
-        if (!request) {
-            return res.status(404).json({ msg: 'Request not found' });
-        }
-
-        res.json({ msg: 'Request removed' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
+    try {
+        const request = await Request.findByIdAndDelete(req.params.id);
+        if (!request) return res.status(404).json({ msg: 'Request not found' });
+        res.json({ msg: 'Request removed' });
+    } catch (err) {
+        res.status(500).send('Server error');
+    }
 });
 
-
-// 👇️ CHANGED: इस राउट का नाम बदला गया (review -> clarify) और लॉजिक बदला गया
-// @route   PUT api/requests/:id/clarify
-// @desc    Admin/Approver adds Notes and sets status to 'Clarification Needed'
-// @access  Private (Approver/Admin Role)
+// @route   PUT api/requests/:id/clarify
 router.put('/:id/clarify', auth, role(['approver', 'admin']), async (req, res) => {
-    const { reviewerNotes } = req.body;
-    const { id } = req.params;
+    const { reviewerNotes } = req.body;
+    const { id } = req.params;
 
-    if (!reviewerNotes) {
-        return res.status(400).json({ msg: 'Notes are required to request clarification.' });
-    }
+    if (!reviewerNotes) return res.status(400).json({ msg: 'Notes are required.' });
 
-    try {
-        let request = await Request.findById(id);
+    try {
+        let request = await Request.findById(id);
+        if (!request) return res.status(404).json({ msg: 'Request not found' });
+        
+        if (request.status !== 'Pending' && request.status !== 'In Review') {
+             return res.status(400).json({ msg: `Cannot request clarification.` });
+        }
 
-        if (!request) {
-            return res.status(404).json({ msg: 'Request not found' });
-        }
-        
-        // एडमिन 'Pending' (पहली बार) या 'In Review' (जवाब के बाद) रिक्वेस्ट पर स्पष्टीकरण मांग सकता है
-        if (request.status !== 'Pending' && request.status !== 'In Review') {
-             return res.status(400).json({ msg: `Cannot request clarification for a request that is '${request.status}'.` });
-        }
+        request.status = 'Clarification Needed';
+        request.reviewerNotes = reviewerNotes;
+        request.requesterReply = '';
+        
+        await request.save();
+        await request.populate('requester', ['firstName', 'lastName']); 
+        res.json(request);
 
-        // Status 'Clarification Needed' पर अपडेट करें
-        request.status = 'Clarification Needed';
-        // Reviewer/Admin Notes जोड़ें
-        request.reviewerNotes = reviewerNotes;
-        // कर्मचारी के पिछले जवाब को साफ़ करें (ताकि बातचीत का थ्रेड साफ़ रहे)
-        request.requesterReply = '';
-        
-        await request.save();
-        
-        // Requester details को populate करके response में भेजें
-        await request.populate('requester', ['name', 'email']); 
-
-        res.json(request);
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
+    } catch (err) {
+        res.status(500).send('Server error');
+    }
 });
-// 👆️ END CHANGE
 
-
-// 👇️ CHANGED: इस राउट का लॉजिक बदला गया
-// @route   PUT api/requests/:id/reply
-// @desc    Employee replies to reviewer notes and sets status to 'In Review'
-// @access  Private (Employee Role)
+// @route   PUT api/requests/:id/reply
 router.put('/:id/reply', auth, role(['employee']), async (req, res) => {
-    const { requesterReply } = req.body;
-    const { id } = req.params;
+    const { requesterReply } = req.body;
+    const { id } = req.params;
 
-    if (!requesterReply) {
-        return res.status(400).json({ msg: 'Reply text is required.' });
-    }
+    if (!requesterReply) return res.status(400).json({ msg: 'Reply text is required.' });
 
-    try {
-        let request = await Request.findById(id);
+    try {
+        let request = await Request.findById(id);
+        if (!request) return res.status(404).json({ msg: 'Request not found' });
+        
+        if (request.requester.toString() !== req.user.id) return res.status(401).json({ msg: 'Not authorized' });
+        
+        if (request.status !== 'Clarification Needed') return res.status(400).json({ msg: `Invalid status.` });
 
-        if (!request) {
-            return res.status(404).json({ msg: 'Request not found' });
-        }
-        
-        // सुनिश्चित करें कि कर्मचारी केवल अपनी ही रिक्वेस्ट का जवाब दे रहा है
-        if (request.requester.toString() !== req.user.id) {
-             return res.status(401).json({ msg: 'Not authorized to reply to this request' });
-        }
-        
-        // केवल 'Clarification Needed' रिक्वेस्ट का ही जवाब दिया जा सकता है
-        if (request.status !== 'Clarification Needed') {
-             return res.status(400).json({ msg: `Cannot reply to request in '${request.status}' status.` });
-        }
+        request.requesterReply = requesterReply;
+        request.status = 'In Review'; 
+        
+        await request.save();
+        res.json(request);
 
-        // Requester Reply जोड़ें
-        request.requesterReply = requesterReply;
-        // Status 'In Review' पर सेट करें, ताकि Approver को पता चले कि इसे फिर से देखना है
-        request.status = 'In Review'; 
-        
-        await request.save();
-        res.json(request);
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
+    } catch (err) {
+        res.status(500).send('Server error');
+    }
 });
-// 👆️ END CHANGE
+
+// @route   PUT api/requests/:id/withdraw
+// @desc    Employee withdraws their own Pending request
+// @access  Private (Employee only)
+router.put('/:id/withdraw', auth, role(['employee']), async (req, res) => {
+    try {
+        const request = await Request.findById(req.params.id);
+
+        if (!request) {
+            return res.status(404).json({ msg: 'Request not found' });
+        }
+
+        // 1. Check: Kya ye user hi iska owner hai?
+        if (request.requester.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Not authorized to withdraw this request.' });
+        }
+
+        // 2. Check: Kya status Pending hai?
+        if (request.status !== 'Pending') {
+            return res.status(400).json({ msg: 'Only pending requests can be withdrawn.' });
+        }
+
+        // 3. Status Update
+        request.status = 'Withdrawn';
+        await request.save();
+
+        res.json(request);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
 
 module.exports = router;
+
+
+// const express = require('express');
+// const router = express.Router();
+// const auth = require('../middleware/auth'); // Auth middleware
+// const Request = require('../models/Request');
+// const role = require('../middleware/role');
+
+// // @route   POST api/requests
+// // @desc    Create a new Purchase Request (Create)
+// // @access  Private
+// // ⭐ (कोई बदलाव नहीं - यह सही है)
+// router.post('/', auth, async (req, res) => {
+//     try {
+//         const { title, description, cost, department, vendorName } = req.body;
+
+//         const newRequest = new Request({
+//             title,
+//             description,
+//             cost,
+//             department,
+//             vendorName: vendorName || '',
+//             requester: req.user.id, // Auth middleware से यूज़र ID प्राप्त करें
+//             status: 'Pending'
+//         });
+
+//         const request = await newRequest.save();
+//         res.json(request);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         // MongoDB validation error (जैसे required field missing)
+//         if (err.name === 'ValidationError') {
+//             return res.status(400).json({ msg: err.message });
+//         }
+//         res.status(500).send('Server error');
+//     }
+// });
+
+
+// // @route   GET api/requests
+// // @desc    Get all requests (filtered by role)
+// // @access  Private
+// // ⭐ (कोई बदलाव नहीं - यह सही है)
+// router.get('/', auth, async (req, res) => {
+//     try {
+//         // 1. Query Parameters से फ़िल्टर वैल्यू प्राप्त करें
+//         const { department, status, minCost, maxCost } = req.query;
+//         const userRole = req.user.role;
+//         let filter = {}; // MongoDB query filter object
+
+//         // 2. Department Filter
+//         if (department && department !== 'All Departments') {
+//             filter.department = department;
+//         }
+
+//         // 3. Status Filter
+//         if (status && status !== 'All Statuses') {
+//             filter.status = status;
+//         }
+
+//         // 4. Cost Range Filter (हमेशा लागू करें, क्योंकि minCost/maxCost हमेशा भेजे जाते हैं)
+//         const minC = parseFloat(minCost);
+//         const maxC = parseFloat(maxCost);
+
+//         if (!isNaN(minC) && !isNaN(maxC)) {
+//             // यदि min/max 0/बड़ी संख्या नहीं है, तो cost filter जोड़ें
+//             if (minC > 0 || maxC < 9999999) {
+//                  filter.cost = { $gte: minC, $lte: maxC }; 
+//             }
+//         }
+//         
+//         // ⭐ FIX: Employee के लिए Requester फ़िल्टर जोड़ें (ओवरराइट न करें!)
+//         if (userRole === 'employee') {
+//             // मौजूदा filters (department, status, cost) को रखते हुए requester ID जोड़ें
+//             filter.requester = req.user.id;
+//         }
+//         
+//         // Find requests based on the combined filter
+//         const requests = await Request.find(filter)
+//             .sort({ createdAt: -1})
+//             .populate('requester', ['name', 'email']); // requester का नाम Populating
+
+//         res.json(requests);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server error');
+//     }
+// });
+
+
+// // @route   GET api/requests/:id
+// // @desc    Get a single request by its ID
+// // @access  Private
+// router.get('/:id', auth, async (req, res) => {
+//     try {
+//         const request = await Request.findById(req.params.id)
+//             .populate('requester', ['name', 'email', 'department']); // रिक्वेस्टर की जानकारी भी लाएं
+
+//         if (!request) {
+//             return res.status(404).json({ msg: 'Request not found' });
+//         }
+
+//         // (सुरक्षा जांच - क्या यह कर्मचारी सिर्फ अपनी रिक्वेस्ट देख सकता है?)
+//         if (req.user.role === 'employee' && request.requester._id.toString() !== req.user.id) {
+//             return res.status(401).json({ msg: 'Not authorized to view this request' });
+//         }
+//         
+//         res.json(request);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         if (err.kind === 'ObjectId') {
+//             return res.status(404).json({ msg: 'Request not found' });
+//         }
+//         res.status(500).send('Server error');
+//     }
+// });
+
+// // @route   PUT api/requests/:id
+// // @desc    Employee edits their own request
+// // @access  Private (Employee only)
+// router.put('/:id', auth, role(['employee']), async (req, res) => {
+//     const { title, description, cost, department, vendorName } = req.body;
+//     
+//     try {
+//         let request = await Request.findById(req.params.id);
+
+//         if (!request) {
+//             return res.status(404).json({ msg: 'Request not found' });
+//         }
+
+//         // 1. सुरक्षा जांच: क्या यह वही कर्मचारी है जिसने इसे बनाया है?
+//         if (request.requester.toString() !== req.user.id) {
+//             return res.status(401).json({ msg: 'User not authorized' });
+//         }
+
+//         // 2. लॉजिक जांच: क्या रिक्वेस्ट अभी भी 'Pending' है?
+//         if (request.status !== 'Pending') {
+//             return res.status(400).json({ msg: 'Cannot edit a request that is already under review.' });
+//         }
+
+//         // 3. अपडेट करें
+//         const updatedFields = {
+//             title,
+//             description,
+//             cost: parseFloat(cost) || 0,
+//             department,
+//             vendorName: vendorName || ''
+//         };
+
+//         request = await Request.findByIdAndUpdate(
+//             req.params.id,
+//             { $set: updatedFields },
+//             { new: true }
+//         ).populate('requester', ['name', 'email']); // फ्रंटएंड को अपडेटेड डेटा भेजें
+
+//         res.json(request);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server error');
+//     }
+// });
+
+// // @route   PUT api/requests/:id/status
+// // @desc    Approve or Reject a Request (Final Decision)
+// // @access  Private (Approver/Admin)
+// router.put('/:id/status', auth, role(['approver', 'admin']), async (req, res) => {
+//     const { status } = req.body; // status must be 'Approved' or 'Rejected'
+//     const { id } = req.params;
+
+//     // 👇️ CHANGED: सेफ्टी चेक को केवल 'Approved' और 'Rejected' के लिए सीमित किया गया
+//     if (!['Approved', 'Rejected'].includes(status)) {
+//         return res.status(400).json({ msg: 'Invalid status update. Must be Approved or Rejected.' });
+//     }
+//     // 👆️ END CHANGE
+
+//     try {
+//         let request = await Request.findById(id);
+
+//         if (!request) {
+//             return res.status(404).json({ msg: 'Request not found' });
+//         }
+
+//         // 👇️ CHANGED: अप्रूवल केवल Pending या In Review रिक्वेस्ट पर ही हो सकता है
+//         if (request.status !== 'Pending' && request.status !== 'In Review') {
+//             return res.status(400).json({ msg: `Cannot approve/reject a request with status '${request.status}'` });
+//         }
+//         // 👆️ END CHANGE
+
+//         // Status update करें
+//         request.status = status;
+//         
+//         // यदि approved, तो approval date सेट करें
+//         if (status === 'Approved') {
+//             request.approvalDate = Date.now();
+//         } else if (status === 'Rejected') {
+//             // (Approval date को null ही रहने दें)
+//         }
+
+//         await request.save();
+//         res.json(request);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server error');
+//     }
+// });
+
+// // @route   DELETE api/requests/:id
+// // @desc    Delete a Request
+// // @access  Private (Admin)
+// // ⭐ (कोई बदलाव नहीं - यह सही है)
+// router.delete('/:id', auth, role(['admin']), async (req, res) => {
+//     try {
+//         // (हम कर्मचारी को भी उसकी Pending रिक्वेस्ट डिलीट करने की अनुमति दे सकते हैं,
+//         //  लेकिन अभी के लिए इसे Admin-only रखते हैं)
+//         const request = await Request.findByIdAndDelete(req.params.id);
+
+//         if (!request) {
+//             return res.status(404).json({ msg: 'Request not found' });
+//         }
+
+//         res.json({ msg: 'Request removed' });
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server error');
+//     }
+// });
+
+
+// // 👇️ CHANGED: इस राउट का नाम बदला गया (review -> clarify) और लॉजिक बदला गया
+// // @route   PUT api/requests/:id/clarify
+// // @desc    Admin/Approver adds Notes and sets status to 'Clarification Needed'
+// // @access  Private (Approver/Admin Role)
+// router.put('/:id/clarify', auth, role(['approver', 'admin']), async (req, res) => {
+//     const { reviewerNotes } = req.body;
+//     const { id } = req.params;
+
+//     if (!reviewerNotes) {
+//         return res.status(400).json({ msg: 'Notes are required to request clarification.' });
+//     }
+
+//     try {
+//         let request = await Request.findById(id);
+
+//         if (!request) {
+//             return res.status(404).json({ msg: 'Request not found' });
+//         }
+//         
+//         // एडमिन 'Pending' (पहली बार) या 'In Review' (जवाब के बाद) रिक्वेस्ट पर स्पष्टीकरण मांग सकता है
+//         if (request.status !== 'Pending' && request.status !== 'In Review') {
+//              return res.status(400).json({ msg: `Cannot request clarification for a request that is '${request.status}'.` });
+//         }
+
+//         // Status 'Clarification Needed' पर अपडेट करें
+//         request.status = 'Clarification Needed';
+//         // Reviewer/Admin Notes जोड़ें
+//         request.reviewerNotes = reviewerNotes;
+//         // कर्मचारी के पिछले जवाब को साफ़ करें (ताकि बातचीत का थ्रेड साफ़ रहे)
+//         request.requesterReply = '';
+//         
+//         await request.save();
+//         
+//         // Requester details को populate करके response में भेजें
+//         await request.populate('requester', ['name', 'email']); 
+
+//         res.json(request);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server error');
+//     }
+// });
+// // 👆️ END CHANGE
+
+
+// // 👇️ CHANGED: इस राउट का लॉजिक बदला गया
+// // @route   PUT api/requests/:id/reply
+// // @desc    Employee replies to reviewer notes and sets status to 'In Review'
+// // @access  Private (Employee Role)
+// router.put('/:id/reply', auth, role(['employee']), async (req, res) => {
+//     const { requesterReply } = req.body;
+//     const { id } = req.params;
+
+//     if (!requesterReply) {
+//         return res.status(400).json({ msg: 'Reply text is required.' });
+//     }
+
+//     try {
+//         let request = await Request.findById(id);
+
+//         if (!request) {
+//             return res.status(404).json({ msg: 'Request not found' });
+//         }
+//         
+//         // सुनिश्चित करें कि कर्मचारी केवल अपनी ही रिक्वेस्ट का जवाब दे रहा है
+//         if (request.requester.toString() !== req.user.id) {
+//              return res.status(401).json({ msg: 'Not authorized to reply to this request' });
+//         }
+//         
+//         // केवल 'Clarification Needed' रिक्वेस्ट का ही जवाब दिया जा सकता है
+//         if (request.status !== 'Clarification Needed') {
+//              return res.status(400).json({ msg: `Cannot reply to request in '${request.status}' status.` });
+//         }
+
+//         // Requester Reply जोड़ें
+//         request.requesterReply = requesterReply;
+//         // Status 'In Review' पर सेट करें, ताकि Approver को पता चले कि इसे फिर से देखना है
+//         request.status = 'In Review'; 
+//         
+//         await request.save();
+//         res.json(request);
+
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server error');
+//     }
+// });
+// // 👆️ END CHANGE
+
+// module.exports = router;

@@ -42,6 +42,7 @@ const SignupScreen = () => {
             
             localStorage.setItem('token', res.data.token); 
             localStorage.setItem('userRole', res.data.role); 
+            localStorage.setItem('userId', res.data.user.id);
 
             alert("Registration successful! Redirecting to Dashboard."); 
 

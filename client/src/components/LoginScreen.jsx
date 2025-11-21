@@ -30,7 +30,9 @@ const LoginScreen = () => {
             
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('userRole', response.data.role);
-
+            // MongoDB mein ID '_id' hoti hai, isliye hum '_id' save karenge
+            // Agar 'response.data.user.id' kaam nahi kiya, to '_id' pakka karega
+            localStorage.setItem('userId', response.data.user._id || response.data.user.id);
             setMessage('✅ Login Successful! Redirecting...');
             
             // setTimeout(() => {
