@@ -6,6 +6,7 @@ const fs = require('fs');
 require('dotenv').config(); 
 const seedDatabase = require('./seedData');
 const path = require('path');
+const requestorRoutes = require('./routes/requestor');
 
 
 // --- 1. Import All Routes Explicitly ---
@@ -74,6 +75,7 @@ if (!fs.existsSync(uploadDir)) {
 console.log("🚀 Serving Static Files from ROOT:", uploadDir);
 app.use('/uploads', express.static(uploadDir));
 
+
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 2. MongoDB Connection...
 if (!MONGO_URI) {
@@ -97,6 +99,7 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/contracts', contractRoutes); 
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/integrations', require('./routes/integration'));
+app.use('/api/requestors', requestorRoutes);
 
 // app.get('/', (req, res) => {
 //     res.send('ProcureIQ Backend API is running...');

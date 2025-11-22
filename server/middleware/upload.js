@@ -31,7 +31,11 @@ const fileFilter = (req, file, cb) => {
     const allowedTypes = [
         'image/jpeg', 'image/png', 'image/jpg', 
         'application/pdf', 'application/msword', 
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', // .xls
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'text/csv', // .csv
+        'text/plain' // .txt
     ];
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);

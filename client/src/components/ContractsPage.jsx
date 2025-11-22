@@ -147,6 +147,10 @@ const navigate = useNavigate();
         return days > 0 && days <= 30 && c.renewalStatus !== 'Cancelled';
     });
     
+   // 👇 YEH NAYA VARIABLE ADD KAREIN
+    // Un contracts ko gine jinka renewal status abhi 'Pending' hai
+    const pendingActionsCount = contracts.filter(c => c.renewalStatus === 'Pending').length;
+
     // Summary Mock Data (since we don't have enough data to calculate these complex metrics)
     const avgContractValue = totalContractValue / (activeContracts || 1);
     const cancelledContracts = contracts.filter(c => c.renewalStatus === 'Cancelled').length;
@@ -306,7 +310,10 @@ const navigate = useNavigate();
                     {/* Pending Actions (Placeholder) */}
                     <div className="p-4 bg-blue-50 border border-blue-300 rounded-lg space-y-1">
                         <p className="text-base font-normal text-blue-800">Pending Actions</p>
-                        <p className="text-sm text-blue-700">1 contracts pending approval</p>
+                        <p className="text-sm text-blue-700">
+                            {/* Dynamic Count */}
+                            <strong>{pendingActionsCount}</strong> contract{pendingActionsCount !== 1 ? 's' : ''} pending renewal decision
+                        </p>
                     </div>
                 </div>
 

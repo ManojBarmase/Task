@@ -102,36 +102,44 @@ router.post('/', [auth, upload.single('document')], async (req, res) => {
 });
 
 
-// @route   PUT api/contracts/:id
-// @desc    Update a contract (for renewal)
-// @access  Private
-router.put('/:id', auth, async (req, res) => {
-    const { start_date, end_date, contractValue, renewalStatus, lastRenewed } = req.body;
-    
-    try {
-        let contract = await Contract.findById(req.params.id);
 
+// @route   PUT api/contracts/:id
+// @desc    Update an existing contract
+// @access  Private
+router.put('/:id', [auth, upload.single('document')], async (req, res) => {
+    try {
+        const { 
+            vendorId, contractTitle, start_date, end_date, 
+            contractValue, renewalStatus, paymentFrequency, contactPerson 
+        } = req.body;
+
+        let contract = await Contract.findById(req.params.id);
         if (!contract) return res.status(404).json({ msg: 'Contract not found' });
 
-        // Build the update object
-        const contractFields = {};
-        if (start_date) contractFields.start_date = start_date; // New Contract Start Date
-        if (end_date) contractFields.end_date = end_date;       // New Contract End Date
-        if (contractValue !== undefined) contractFields.contractValue = contractValue;
-        if (renewalStatus) contractFields.renewalStatus = renewalStatus;
-        if (lastRenewed) contractFields.lastRenewed = lastRenewed;
+        // Update Fields
+        contract.vendor = vendorId || contract.vendor;
+        contract.contractTitle = contractTitle || contract.contractTitle;
+        contract.start_date = start_date || contract.start_date;
+        contract.end_date = end_date || contract.end_date;
+        contract.contractValue = contractValue || contract.contractValue;
+        contract.renewalStatus = renewalStatus || contract.renewalStatus;
+        contract.paymentFrequency = paymentFrequency || contract.paymentFrequency;
+        contract.contactPerson = contactPerson || contract.contactPerson;
 
-        // Update and save
-        contract = await Contract.findByIdAndUpdate(
-            req.params.id,
-            { $set: contractFields },
-            { new: true } // Return the updated document
-        ).populate('vendor', ['vendorName', 'productTool']); // Populate vendor data for the frontend update
+        // Update File if a new one is uploaded
+        if (req.file) {
+            contract.documentPath = `uploads/${req.file.filename}`;
+        }
+
+        await contract.save();
+        
+        // Populate vendor details before sending back
+        await contract.populate('vendor', 'vendorName productTool contactName contactEmail phone');
 
         res.json(contract);
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server error');
+        res.status(500).send('Server Error');
     }
 });
 
