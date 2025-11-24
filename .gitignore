@@ -1,16 +1,32 @@
 # Dependencies
 /node_modules
 /server/node_modules
+/client/node_modules
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables
+# Environment variables (SAB KUCH HIDE KAREIN)
 .env
-.env.local
+.env.*
+!
+.env.example
 
-# Production Build Folders (Vite/React)
+# Specific paths just to be safe
+server/.env
+client/.env
+client/.env.development
+client/.env.production
+client/.env.local
+
+# Production Build Folders
 /dist
 /build
+/client/dist
+/client/build
+
+# System Files
+.DS_Store
+Thumbs.db
