@@ -91,7 +91,7 @@ mongoose.connect(MONGO_URI)
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 
-// 3. Routes Define करें (Using imported variables now)
+// 3. Routes Define करें (Using imported variables now) api prefix
 app.use('/api/auth', authRoutes); 
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', requestRoutes);

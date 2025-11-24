@@ -203,17 +203,7 @@ const RequestsPage = () => {
         }
     }, [token, location.state]);
 
-//     useEffect(() => {
-//         let currentFiltered = allRequests;
-//         if (activeTab !== 'All') {
-//             currentFiltered = currentFiltered.filter(req => req.status === activeTab);
-//         }
-//         if (departmentFilter !== 'All') {
-//             currentFiltered = currentFiltered.filter(req => req.department === departmentFilter);
-//         }
-//         currentFiltered = currentFiltered.filter(req => Number(req.cost) <= costFilter);
-//         setFilteredRequests(currentFiltered);
-//     }, [allRequests, activeTab, departmentFilter, costFilter]);
+
 useEffect(() => {
         let currentFiltered = allRequests;
         
@@ -287,40 +277,7 @@ useEffect(() => {
             </div>
             <p className="text-gray-600 -mt-4 mb-6">Manage all procurement requests.</p>
             
-            {/* Filter Card (कोई बदलाव नहीं) */}
-{/*             {showFilterOptions && (
-                <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                            <select
-                                value={departmentFilter}
-                                onChange={(e) => setDepartmentFilter(e.target.value)}
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500"
-                            >
-                                <option value="All">All Departments</option>
-                                {['IT', 'HR', 'Finance', 'Marketing', 'Operations', 'R&D'].map(dept => (
-                                    <option key={dept} value={dept}>{dept}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Cost Range: $0 - {formatCurrency(costFilter)}</label>
-                            <input 
-                                type="range" 
-                                min="0" 
-                                max="10000000" 
-                                step="1000" 
-                                value={costFilter} 
-                                onChange={(e) => setCostFilter(Number(e.target.value))}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg"
-                            />
-                        </div>
-                    </div>
-                </div>
-            )} */}
+        
 {/* 👇️ CHANGED: यह पूरा फ़िल्टर पैनल आपके स्क्रीनशॉट (100) जैसा अपडेट किया गया है */}
             {showFilterOptions && (
                 <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-4">
@@ -568,23 +525,7 @@ useEffect(() => {
                                       </>
                                         )}
 
-                                        {/* 4. Status: Approved/Rejected */}
-{/*                                         {(request.status === 'Approved' || request.status === 'Rejected') && (
-                                            <span 
-                                                onClick={() => handleReplyClick(request)} 
-                                                className={`relative group p-2 rounded-full cursor-pointer transition-colors ${
-                                                    (request.reviewerNotes || request.requesterReply) 
-                                                    ? 'text-gray-500 hover:text-green-600 hover:bg-green-100'
-                                                 : 'text-gray-300'
-                                                }`}
-                                            >
-                                                <MessageSquare className="w-5 h-5" />
-                                   
-                                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 px-3 py-1 bg-sky-700 text-white text-sm font-medium rounded-md shadow-lg transition-opacity whitespace-nowrap z-10">
-                                                    View Communication History
-                                                </span>
-                                            </span>
-                                        )} */}
+                                      
                                          {/* 4. Status: Approved/Rejected */}
                                           {(request.status === 'Approved' || request.status === 'Rejected') && (
                                               <span 
