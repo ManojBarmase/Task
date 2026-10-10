@@ -433,8 +433,8 @@ useEffect(() => {
                                     
                                     {/* 👇️ CHANGED: Actions Cell का पूरा लॉजिक अपडेट किया गया */}
                                     {/* 👇️ CHANGED: Actions Cell का पूरा लॉजिक अपडेट किया गया */}
-                                    <td className="px-8 py-2 whitespace-nowrap text-sm font-medium text-center" onClick={(e) => e.stopPropagation()}>
-    
+                                    <td className="px-8 py-2 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center justify-center gap-2">
                                         {/* 1. Status: Pending */}
                                         {request.status === 'Pending' && (
                                             <>
@@ -556,7 +556,7 @@ useEffect(() => {
                                                   </span>
                                               </span>
                                           )}
-    
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

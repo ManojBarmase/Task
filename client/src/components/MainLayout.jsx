@@ -63,14 +63,19 @@ const navLinks = [
     // --- Sidebar JSX ---
     const Sidebar = (
         <div className="flex flex-col flex-shrink-0 bg-sky-800 border-r border-gray-200 h-full" style={{ width: '256px' }}> {/* h-full जोड़ा गया */}
-            <div className="h-16 p-5 flex items-center justify-center border-b border-gray-200 bg-sky-900">
-                {/* <h1 className="text-xl font-normal text-white">ProcureIQ</h1> */}
-                {/* NAYA CODE (Logo Lagayein): */}
-                <img 
-                    src={logo} 
-                    alt="ProcureIQ Logo" 
-                    className="h-7 w-auto object-contain" // h-10 size adjust karne ke liye hai
-                />
+            {/* Logo Area: Match top navbar with white background to seamlessly blend rectangular logos */}
+            <div className="h-16 flex items-center justify-start bg-white border-b-2 border-gray-100 px-8 shrink-0 relative z-10 shadow-sm">
+                <Link 
+                    to="/dashboard" 
+                    className="flex items-center w-full h-full outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded transition-opacity hover:opacity-80"
+                    aria-label="Go to Dashboard"
+                >
+                    <img 
+                        src={logo} 
+                        alt="Mankray Logo" 
+                        className="h-12 md:h-14 w-auto max-w-full object-contain object-left scale-110 origin-left"
+                    />
+                </Link>
             </div>
 
             <div className="flex-1 flex flex-col pt-6 pb-4 overflow-y-auto"> {/* Sidebar Navigation Scrollable */}

@@ -222,21 +222,6 @@ const handleNewRequestSave = (newRequest) => {
         <>
            
      <div className="p-8 pb-52 bg-gray-50 space-y-6">
-                     {/* <div className="flex justify-between items-center relative">
-                       <h1 className="text-2xl font-semibold text-gray-800">Dashboard</h1>
-                       
-                        
-                        {isEmployee && (
-                        <button 
-                            onClick={() => navigate('/requests/new')}
-                            className="flex items-center px-2 py-1 bg-sky-600 text-white text-sm font-semibold rounded-md shadow-lg hover:bg-sky-500 transition-all transform "
-                        >
-                        <Plus className="w-4 h-4 mr-2" />
-                            New Request
-                        </button>
-                        )}
-                  </div> */}
-
             <div className="flex justify-between items-center relative"> {/* 👈️ 'relative' जोड़ा गया FilterPanel की स्थिति के लिए */}
                 <h1 className="text-2xl font-semibold text-gray-800">Dashboard</h1>
                 
@@ -262,15 +247,6 @@ const handleNewRequestSave = (newRequest) => {
                         Filters
                     </button>
                 </div>
-                
-                {/* 👈️ FILTER PANEL RENDER */}
-                {/* {isFilterOpen && (
-                    <FilterPanel 
-                        filters={filters} 
-                        handleFilterChange={handleFilterChange} 
-                        onClose={toggleFilterPanel} 
-                    />
-                )} */}
             </div>
 
           
@@ -412,37 +388,7 @@ const handleNewRequestSave = (newRequest) => {
 
                     </div>
             )}
-                    {/* Metrics Cards */}
-                    {/* <div className="grid grid-cols-4 gap-6"> */}
-                        {/* Card 1: Pending Requests */}
-                        {/* <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-2">
-                            <p className="text-sm font-normal text-gray-500">Pending Requests</p>
-                            <div className="text-3xl font-normal text-gray-900">{metrics.pendingRequests || 0}</div>
-                            <p className="text-xs text-gray-500">-3 from last week</p>
-                        </div> */}
-                        
-                        {/* Card 2: Upcoming Renewals */}
-                        {/* <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-2">
-                            <p className="text-sm font-normal text-gray-500">Upcoming Renewals</p>
-                            <div className="text-3xl font-normal text-gray-900">{metrics.upcomingRenewals || 0}</div>
-                            <p className="text-xs text-gray-500">Next 30 days</p>
-                        </div> */}
-                        
-                        {/* Card 3: Total Spend */}
-                        {/* <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-2">
-                            <p className="text-sm font-normal text-gray-500">Total Spend</p>
-                            <div className="text-3xl font-normal text-gray-900">{formatCurrency(metrics.totalSpend || 0)}</div>
-                            <p className="text-xs text-gray-500">-12% from last month</p>
-                        </div> */}
-                        
-                        {/* Card 4: Vendors in Review */}
-                        {/* <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-2">
-                            <p className="text-sm font-normal text-gray-500">Vendors in Review</p>
-                            <div className="text-3xl font-normal text-gray-900">{metrics.vendorsInReview || 0}</div>
-                            <p className="text-xs text-gray-500">Awaiting approval</p>
-                        </div> */}
-                    {/* </div> */}
-                    
+                   
 
                     {/* Recent Requests Table */}
                     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">

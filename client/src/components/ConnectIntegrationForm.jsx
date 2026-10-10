@@ -31,36 +31,7 @@ const ConnectIntegrationForm = ({ integration, onClose, onIntegrationConnected }
         }));
     };
 
-    // const handleSubmit = (e) => {
-    //     e.preventDefault();
-    //     setLoading(true);
-    //     setError(null);
-    //     setSuccess(false);
-
-    //     // --- Mock Connection API Call ---
-    //     // In a real application, this would validate credentials (apiKey) with the backend.
-        
-    //     setTimeout(() => {
-    //         setLoading(false);
-            
-    //         if (!formData.apiKey || formData.apiKey === 'fail') {
-    //             setError("Connection failed. Check your API Key and try again.");
-    //             return;
-    //         }
-            
-    //         setSuccess(true);
-            
-    //         // 💡 Parent component को सूचित करें कि यह इंटीग्रेशन अब Connected है
-    //         onIntegrationConnected(integration.id, {
-    //             status: 'Connected',
-    //             syncDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    //             syncFrequency: formData.syncFrequency
-    //         });
-            
-    //         // Close the modal after a short delay
-    //         setTimeout(onClose, 1500); 
-    //     }, 1500);
-    // };
+  
 
      const handleSubmit = (e) => {
     e.preventDefault();
