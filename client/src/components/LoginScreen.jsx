@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Chrome, Check } from 'lucide-react'; // Icons
-import logo1 from '../assets/logo1.png';
+import logo1 from '../assets/logo.png';
 
 // Backend API URL (Vite environment variable से)
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;

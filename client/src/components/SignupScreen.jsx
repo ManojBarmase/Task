@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { User, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/logo1.png'; // Logo import
+import logo from '../assets/logo.png'; // Logo import
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
